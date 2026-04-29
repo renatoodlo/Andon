@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Andon — Justificativa de Paradas</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="tela-login" class="tela-login">
+    <div class="login-box">
+      <h1>⚙️ Andon MEP</h1>
+      <p class="login-sub">Sistema de Justificativa de Paradas</p>
+      <form id="form-login">
+        <input type="text"     id="login-user"  placeholder="Usuário"  required autocomplete="username" />
+        <input type="password" id="login-senha" placeholder="Senha"    required autocomplete="current-password" />
+        <button type="submit">Entrar</button>
+        <p id="login-erro" class="erro hidden"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tela-dashboard" class="hidden">
+    <header class="header">
+      <div class="header-left">
+        <span class="header-title">⚙️ Andon MEP</span>
+      </div>
+      <div class="header-right">
+        <span id="header-usuario" class="header-usuario"></span>
+        <button id="btn-logout" class="btn-outline">Sair</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- FILTROS -->
+      <section class="filtros">
+        <select id="filtro-status">
+          <option value="">Todos os status</option>
+          <option value="NAO_JUSTIFICADO">Não Justificado</option>
+          <option value="PARCIAL">Parcial</option>
+          <option value="JUSTIFICADO">Justificado</option>
+        </select>
+        <input type="date" id="filtro-data" />
+        <input type="text" id="filtro-maquina" placeholder="InventoryNumber..." />
+        <button id="btn-filtrar" class="btn-primary">Filtrar</button>
+        <button id="btn-limpar"  class="btn-outline">Limpar</button>
+        <span id="badge-pendentes" class="badge-pendentes hidden"></span>
+      </section>
+
+      <!-- PENDENTES -->
+      <section id="secao-pendentes" class="secao hidden">
+        <h2 class="secao-titulo urgente">🔴 Não Justificadas</h2>
+        <div id="grid-pendentes" class="grid"></div>
+      </section>
+
+      <!-- TODAS -->
+      <section class="secao">
+        <h2 class="secao-titulo">📋 Histórico de Paradas</h2>
+        <div id="grid-paradas" class="grid"></div>
+        <p id="msg-vazio" class="msg-vazio hidden">Nenhuma parada encontrada.</p>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL JUSTIFICATIVA -->
+  <div id="modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-titulo">Justificar Parada</h3>
+        <button id="modal-fechar" class="btn-fechar">✕</button>
+      </div>
+      <div class="modal-info" id="modal-info"></div>
+      <form id="form-just">
+        <input type="hidden" id="just-parada-id" />
+        <label>Início da justificativa
+          <input type="datetime-local" id="just-inicio" required />
+        </label>
+        <label>Fim da justificativa
+          <input type="datetime-local" id="just-fim" required />
+        </label>
+        <label>Categoria
+          <select id="just-categoria" required>
+            <option value="">Selecione...</option>
+            <option>Troca de ferramenta</option>
+            <option>Manutenção corretiva</option>
+            <option>Manutenção preventiva</option>
+            <option>Setup / Ajuste</option>
+            <option>Falta de material</option>
+            <option>Falta de operador</option>
+            <option>Qualidade</option>
+            <option>Reunião / Treinamento</option>
+            <option>Outro</option>
+          </select>
+        </label>
+        <label>Responsável
+          <input type="text" id="just-responsavel" placeholder="Nome do responsável" required />
+        </label>
+        <label>Descrição (opcional)
+          <textarea id="just-descricao" rows="3" placeholder="Detalhes..."></textarea>
+        </label>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancelar" class="btn-outline">Cancelar</button>
+          <button type="submit" class="btn-primary">Salvar Justificativa</button>
+        </div>
+        <p id="just-erro" class="erro hidden"></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
