@@ -26,11 +26,6 @@ function fmtDuracao(min) {
   return `${Math.floor(min / 60)}h ${min % 60}min`;
 }
 
-function toLocalInput(str) {
-  if (!str) return '';
-  return str.replace(' ', 'T').slice(0, 16);
-}
-
 // ── LOGIN ──────────────────────────────────────────────────────────────────
 
 $('form-login').addEventListener('submit', async e => {
@@ -69,52 +64,74 @@ $('btn-logout').addEventListener('click', () => {
   $('login-senha').value = '';
 });
 
-// ── NAVEGAÇÃO ──────────────────────────────────────────────────────────────
+// ── DASHBOARD ──────────────────────────────────────────────────────────────
 
 function mostrarDashboard() {
   $('tela-login').classList.add('hidden');
   $('tela-dashboard').classList.remove('hidden');
   $('header-usuario').textContent = `👤 ${USUARIO} (${PERFIL})`;
-  carregarParadas();
+
+  if (PERFIL === 'supervisor') {
+    $('nav-usuarios').classList.remove('hidden');
+  }
+
+  mostrarAba('paradas');
   clearInterval(REFRESH_TIMER);
-  REFRESH_TIMER = setInterval(carregarParadas, 30000);
+  REFRESH_TIMER = setInterval(() => {
+    if (!$('aba-paradas').classList.contains('hidden')) carregarParadas();
+  }, 30000);
 }
+
+// ── NAVEGAÇÃO ABAS ─────────────────────────────────────────────────────────
+
+function mostrarAba(aba) {
+  $('aba-paradas').classList.toggle('hidden', aba !== 'paradas');
+  $('aba-usuarios').classList.toggle('hidden', aba !== 'usuarios');
+  $('nav-paradas').classList.toggle('active', aba === 'paradas');
+  $('nav-usuarios').classList.toggle('active', aba === 'usuarios');
+
+  if (aba === 'paradas')  carregarParadas();
+  if (aba === 'usuarios') carregarUsuarios();
+}
+
+$('nav-paradas').addEventListener('click',  () => mostrarAba('paradas'));
+$('nav-usuarios').addEventListener('click', () => mostrarAba('usuarios'));
 
 // ── FILTROS ────────────────────────────────────────────────────────────────
 
 $('btn-filtrar').addEventListener('click', carregarParadas);
 $('btn-limpar').addEventListener('click', () => {
-  $('filtro-status').value   = '';
-  $('filtro-data').value     = '';
-  $('filtro-maquina').value  = '';
+  $('filtro-status').value      = '';
+  $('filtro-data-inicio').value = '';
+  $('filtro-data-fim').value    = '';
+  $('filtro-maquina').value     = '';
   carregarParadas();
 });
 
 function buildQuery() {
   const p = new URLSearchParams();
-  const s = $('filtro-status').value;
-  const d = $('filtro-data').value;
-  const m = $('filtro-maquina').value.trim();
-  if (s) p.set('status',  s);
-  if (d) p.set('data',    d);
-  if (m) p.set('maquina', m);
+  const s  = $('filtro-status').value;
+  const di = $('filtro-data-inicio').value;
+  const df = $('filtro-data-fim').value;
+  const m  = $('filtro-maquina').value.trim();
+  if (s)  p.set('status',      s);
+  if (di) p.set('data_inicio', di);
+  if (df) p.set('data_fim',    df);
+  if (m)  p.set('maquina',     m);
   return p.toString() ? '?' + p.toString() : '';
 }
 
-// ── CARREGAR PARADAS ───────────────────────────────────────────────────────
+// ── PARADAS ────────────────────────────────────────────────────────────────
 
 async function carregarParadas() {
   try {
     const r = await api('/paradas' + buildQuery());
     if (r.status === 401) { $('btn-logout').click(); return; }
-    const paradas = await r.json();
-    renderParadas(paradas);
+    renderParadas(await r.json());
   } catch (err) {
     console.error('Erro ao carregar paradas:', err);
   }
 }
-
-// ── RENDER ─────────────────────────────────────────────────────────────────
 
 function renderParadas(paradas) {
   const pendentes = paradas.filter(p => p.status_just === 'NAO_JUSTIFICADO' && p.fim);
@@ -138,31 +155,20 @@ function renderParadas(paradas) {
   });
 }
 
-function statusClass(s) {
-  if (s === 'NAO_JUSTIFICADO') return 'nao-justificado';
-  if (s === 'PARCIAL')         return 'parcial';
-  return 'justificado';
-}
-
-function badgeHTML(s) {
-  const map = {
-    NAO_JUSTIFICADO: ['nao', '🔴 Não Justificado'],
-    PARCIAL:         ['par', '🟡 Parcial'],
-    JUSTIFICADO:     ['jus', '✅ Justificado'],
-  };
-  const [cls, label] = map[s] || ['nao', s];
-  return `<span class="badge ${cls}">${label}</span>`;
-}
-
 function cardHTML(p) {
   const emAndamento = !p.fim;
-  const btnLabel  = emAndamento ? 'Em andamento...' : 'Justificar';
-  const btnDisabled = (emAndamento || p.status_just === 'JUSTIFICADO') ? 'disabled' : '';
+  const justificado = p.status_just === 'JUSTIFICADO';
+  const btnDisabled = (emAndamento || justificado) ? 'disabled' : '';
+  const btnLabel    = emAndamento ? '⏳ Em andamento' : justificado ? '✅ Justificado' : 'Justificar';
+  const nome        = p.nome_maquina || `Máquina ${p.inventory_number}`;
 
   return `
-  <div class="card ${statusClass(p.status_just)}">
+  <div class="card ${p.status_just === 'JUSTIFICADO' ? 'justificado' : 'nao-justificado'}">
     <div class="card-header">
-      <span class="card-maquina">🏭 Máquina ${p.inventory_number}</span>
+      <div>
+        <div class="card-maquina">🏭 ${nome}</div>
+        <div class="card-inv">${p.inventory_number}</div>
+      </div>
       ${badgeHTML(p.status_just)}
     </div>
     <div class="card-duracao">${emAndamento ? '⏳ Em andamento' : fmtDuracao(p.duracao_min)}</div>
@@ -172,28 +178,29 @@ function cardHTML(p) {
   </div>`;
 }
 
-// ── MODAL ──────────────────────────────────────────────────────────────────
+function badgeHTML(s) {
+  if (s === 'JUSTIFICADO') return `<span class="badge jus">✅ Justificado</span>`;
+  return `<span class="badge nao">🔴 Não Justificado</span>`;
+}
+
+// ── MODAL JUSTIFICATIVA ────────────────────────────────────────────────────
 
 async function abrirModal(paradaId) {
   const r = await api(`/paradas/${paradaId}`);
   const p = await r.json();
+  const nome = p.nome_maquina || `Máquina ${p.inventory_number}`;
 
   $('just-parada-id').value = p.id;
-  $('modal-titulo').textContent = `Justificar — Máquina ${p.inventory_number}`;
+  $('modal-titulo').textContent = `Justificar — ${nome}`;
   $('modal-info').innerHTML = `
     <strong>Início:</strong> ${fmtDt(p.inicio)}<br>
     <strong>Fim:</strong> ${fmtDt(p.fim)}<br>
-    <strong>Duração:</strong> ${fmtDuracao(p.duracao_min)}<br>
-    <strong>Status:</strong> ${p.status_just.replace('_', ' ')}
+    <strong>Duração:</strong> ${fmtDuracao(p.duracao_min)}
   `;
-
-  $('just-inicio').value = toLocalInput(p.inicio);
-  $('just-fim').value    = toLocalInput(p.fim);
   $('just-categoria').value  = '';
   $('just-responsavel').value = '';
   $('just-descricao').value  = '';
   $('just-erro').classList.add('hidden');
-
   $('modal').classList.remove('hidden');
 }
 
@@ -203,35 +210,17 @@ $('modal-fechar').addEventListener('click', fecharModal);
 $('btn-cancelar').addEventListener('click', fecharModal);
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) fecharModal(); });
 
-// ── SUBMIT JUSTIFICATIVA ───────────────────────────────────────────────────
-
 $('form-just').addEventListener('submit', async e => {
   e.preventDefault();
   $('just-erro').classList.add('hidden');
-
-  const inicio = $('just-inicio').value.replace('T', ' ');
-  const fim    = $('just-fim').value.replace('T', ' ');
-
-  if (inicio >= fim) {
-    $('just-erro').textContent = 'O início deve ser antes do fim.';
-    $('just-erro').classList.remove('hidden');
-    return;
-  }
-
   const body = {
     parada_id:   Number($('just-parada-id').value),
-    inicio_just: inicio,
-    fim_just:    fim,
     categoria:   $('just-categoria').value,
     responsavel: $('just-responsavel').value.trim(),
     descricao:   $('just-descricao').value.trim(),
   };
-
   try {
-    const r = await api('/justificativas', {
-      method: 'POST',
-      body:   JSON.stringify(body),
-    });
+    const r = await api('/justificativas', { method: 'POST', body: JSON.stringify(body) });
     const data = await r.json();
     if (!r.ok) throw new Error(data.detail || 'Erro ao salvar');
     fecharModal();
@@ -241,6 +230,90 @@ $('form-just').addEventListener('submit', async e => {
     $('just-erro').classList.remove('hidden');
   }
 });
+
+// ── USUÁRIOS ───────────────────────────────────────────────────────────────
+
+async function carregarUsuarios() {
+  try {
+    const r = await api('/usuarios');
+    if (!r.ok) return;
+    renderUsuarios(await r.json());
+  } catch (err) {
+    console.error('Erro ao carregar usuários:', err);
+  }
+}
+
+function renderUsuarios(usuarios) {
+  const tbody = $('tbody-usuarios');
+  tbody.innerHTML = usuarios.map(u => `
+    <tr>
+      <td>${u.nome}</td>
+      <td>${u.login}</td>
+      <td><span class="tag-perfil ${u.perfil}">${u.perfil}</span></td>
+      <td><span class="${u.ativo ? 'tag-ativo' : 'tag-inativo'}">${u.ativo ? 'Ativo' : 'Inativo'}</span></td>
+      <td class="acoes">
+        <button class="btn-edit" onclick="abrirModalUsuario(${u.id}, '${u.nome}', '${u.login}', '${u.perfil}')">Editar</button>
+        <button class="btn-danger" onclick="excluirUsuario(${u.id}, '${u.nome}')">${u.ativo ? 'Desativar' : 'Ativar'}</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+$('btn-novo-usuario').addEventListener('click', () => abrirModalUsuario());
+
+function abrirModalUsuario(id = null, nome = '', login = '', perfil = 'operador') {
+  $('usuario-id').value     = id || '';
+  $('usuario-nome').value   = nome;
+  $('usuario-login').value  = login;
+  $('usuario-perfil').value = perfil;
+  $('usuario-senha').value  = '';
+  $('usuario-erro').classList.add('hidden');
+  $('modal-usuario-titulo').textContent = id ? 'Editar Usuário' : 'Novo Usuário';
+  $('usuario-login').disabled = !!id;
+  $('modal-usuario').classList.remove('hidden');
+}
+
+function fecharModalUsuario() { $('modal-usuario').classList.add('hidden'); }
+$('modal-usuario-fechar').addEventListener('click', fecharModalUsuario);
+$('btn-usuario-cancelar').addEventListener('click', fecharModalUsuario);
+$('modal-usuario').addEventListener('click', e => { if (e.target === $('modal-usuario')) fecharModalUsuario(); });
+
+$('form-usuario').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('usuario-erro').classList.add('hidden');
+  const id    = $('usuario-id').value;
+  const body  = {
+    nome:   $('usuario-nome').value.trim(),
+    perfil: $('usuario-perfil').value,
+  };
+  if (!id) body.login = $('usuario-login').value.trim();
+  const senha = $('usuario-senha').value;
+  if (senha) body.senha = senha;
+  else if (!id) { $('usuario-erro').textContent = 'Senha obrigatória para novo usuário'; $('usuario-erro').classList.remove('hidden'); return; }
+
+  try {
+    const r = id
+      ? await api(`/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(body) })
+      : await api('/usuarios',        { method: 'POST', body: JSON.stringify(body) });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Erro ao salvar');
+    fecharModalUsuario();
+    carregarUsuarios();
+  } catch (err) {
+    $('usuario-erro').textContent = err.message;
+    $('usuario-erro').classList.remove('hidden');
+  }
+});
+
+async function excluirUsuario(id, nome) {
+  if (!confirm(`Desativar/ativar o usuário "${nome}"?`)) return;
+  try {
+    await api(`/usuarios/${id}`, { method: 'DELETE' });
+    carregarUsuarios();
+  } catch (err) {
+    alert('Erro ao alterar usuário');
+  }
+}
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 

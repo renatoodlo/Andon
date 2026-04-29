@@ -27,6 +27,10 @@
     <header class="header">
       <div class="header-left">
         <span class="header-title">⚙️ Andon MEP</span>
+        <nav class="nav">
+          <button id="nav-paradas"  class="nav-btn active">Paradas</button>
+          <button id="nav-usuarios" class="nav-btn supervisor-only hidden">Usuários</button>
+        </nav>
       </div>
       <div class="header-right">
         <span id="header-usuario" class="header-usuario"></span>
@@ -34,33 +38,58 @@
       </div>
     </header>
 
-    <main class="main">
-      <!-- FILTROS -->
+    <!-- ABA PARADAS -->
+    <main id="aba-paradas" class="main">
       <section class="filtros">
         <select id="filtro-status">
           <option value="">Todos os status</option>
           <option value="NAO_JUSTIFICADO">Não Justificado</option>
-          <option value="PARCIAL">Parcial</option>
           <option value="JUSTIFICADO">Justificado</option>
         </select>
-        <input type="date" id="filtro-data" />
+        <div class="filtro-range">
+          <input type="date" id="filtro-data-inicio" title="De" />
+          <span class="range-sep">até</span>
+          <input type="date" id="filtro-data-fim" title="Até" />
+        </div>
         <input type="text" id="filtro-maquina" placeholder="InventoryNumber..." />
         <button id="btn-filtrar" class="btn-primary">Filtrar</button>
         <button id="btn-limpar"  class="btn-outline">Limpar</button>
         <span id="badge-pendentes" class="badge-pendentes hidden"></span>
       </section>
 
-      <!-- PENDENTES -->
       <section id="secao-pendentes" class="secao hidden">
         <h2 class="secao-titulo urgente">🔴 Não Justificadas</h2>
         <div id="grid-pendentes" class="grid"></div>
       </section>
 
-      <!-- TODAS -->
       <section class="secao">
         <h2 class="secao-titulo">📋 Histórico de Paradas</h2>
         <div id="grid-paradas" class="grid"></div>
         <p id="msg-vazio" class="msg-vazio hidden">Nenhuma parada encontrada.</p>
+      </section>
+    </main>
+
+    <!-- ABA USUÁRIOS -->
+    <main id="aba-usuarios" class="main hidden">
+      <section class="secao">
+        <div class="secao-header">
+          <h2 class="secao-titulo">👥 Gestão de Usuários</h2>
+          <button id="btn-novo-usuario" class="btn-primary">+ Novo Usuário</button>
+        </div>
+        <div id="tabela-usuarios-wrap">
+          <table class="tabela-usuarios">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Login</th>
+                <th>Perfil</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-usuarios"></tbody>
+          </table>
+        </div>
       </section>
     </main>
   </div>
@@ -75,12 +104,6 @@
       <div class="modal-info" id="modal-info"></div>
       <form id="form-just">
         <input type="hidden" id="just-parada-id" />
-        <label>Início da justificativa
-          <input type="datetime-local" id="just-inicio" required />
-        </label>
-        <label>Fim da justificativa
-          <input type="datetime-local" id="just-fim" required />
-        </label>
         <label>Categoria
           <select id="just-categoria" required>
             <option value="">Selecione...</option>
@@ -106,6 +129,40 @@
           <button type="submit" class="btn-primary">Salvar Justificativa</button>
         </div>
         <p id="just-erro" class="erro hidden"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL USUÁRIO -->
+  <div id="modal-usuario" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-usuario-titulo">Novo Usuário</h3>
+        <button id="modal-usuario-fechar" class="btn-fechar">✕</button>
+      </div>
+      <form id="form-usuario">
+        <input type="hidden" id="usuario-id" />
+        <label>Nome completo
+          <input type="text" id="usuario-nome" required />
+        </label>
+        <label>Login
+          <input type="text" id="usuario-login" required />
+        </label>
+        <label>Senha
+          <input type="password" id="usuario-senha" placeholder="Deixe vazio para não alterar" />
+        </label>
+        <label>Perfil
+          <select id="usuario-perfil" required>
+            <option value="operador">Operador</option>
+            <option value="tecnico">Técnico</option>
+            <option value="supervisor">Supervisor</option>
+          </select>
+        </label>
+        <div class="modal-actions">
+          <button type="button" id="btn-usuario-cancelar" class="btn-outline">Cancelar</button>
+          <button type="submit" class="btn-primary">Salvar</button>
+        </div>
+        <p id="usuario-erro" class="erro hidden"></p>
       </form>
     </div>
   </div>

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS paradas (
     fim              TEXT,
     duracao_min      INTEGER,
     status_just      TEXT    NOT NULL DEFAULT 'NAO_JUSTIFICADO'
-                     CHECK(status_just IN ('NAO_JUSTIFICADO', 'PARCIAL', 'JUSTIFICADO')),
+                     CHECK(status_just IN ('NAO_JUSTIFICADO', 'JUSTIFICADO')),
     teams_msg_id     TEXT
 );
 
