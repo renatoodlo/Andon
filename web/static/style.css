@@ -264,6 +264,46 @@ button { cursor: pointer; font-size: 1rem; border: none; border-radius: var(--ra
 .btn-justificar:hover { background: var(--primary-h); }
 .btn-justificar:disabled { opacity: .5; cursor: default; }
 
+.btn-detalhes {
+  margin-top: .4rem;
+  background: transparent;
+  color: var(--success);
+  border: 1px solid var(--success);
+  padding: .75rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  width: 100%;
+  font-size: .95rem;
+}
+.btn-detalhes:hover { background: rgba(34,197,94,.1); }
+
+.detalhe-bloco {
+  background: var(--surface2);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.detalhe-titulo {
+  font-size: .78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--text-muted);
+  margin-bottom: .3rem;
+}
+
+.detalhe-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: .9rem;
+  gap: 1rem;
+}
+.detalhe-row span:first-child { color: var(--text-muted); }
+.detalhe-row span:last-child  { color: var(--text); font-weight: 500; text-align: right; }
+
 /* ── TABELA USUÁRIOS ────────────────────────────────────── */
 #tabela-usuarios-wrap { overflow-x: auto; }
 

@@ -153,6 +153,9 @@ function renderParadas(paradas) {
   document.querySelectorAll('.btn-justificar').forEach(btn => {
     btn.addEventListener('click', () => abrirModal(Number(btn.dataset.id)));
   });
+  document.querySelectorAll('.btn-detalhes').forEach(btn => {
+    btn.addEventListener('click', () => abrirDetalhes(Number(btn.dataset.id)));
+  });
 }
 
 function cardHTML(p) {
@@ -174,7 +177,10 @@ function cardHTML(p) {
     <div class="card-duracao">${emAndamento ? '⏳ Em andamento' : fmtDuracao(p.duracao_min)}</div>
     <div class="card-row"><span>Início</span><span>${fmtDt(p.inicio)}</span></div>
     <div class="card-row"><span>Fim</span><span>${fmtDt(p.fim)}</span></div>
-    <button class="btn-justificar" data-id="${p.id}" ${btnDisabled}>${btnLabel}</button>
+    ${justificado
+      ? `<button class="btn-detalhes" data-id="${p.id}">🔍 Ver detalhes</button>`
+      : `<button class="btn-justificar" data-id="${p.id}" ${btnDisabled}>${btnLabel}</button>`
+    }
   </div>`;
 }
 
@@ -230,6 +236,41 @@ $('form-just').addEventListener('submit', async e => {
     $('just-erro').classList.remove('hidden');
   }
 });
+
+// ── MODAL DETALHES ─────────────────────────────────────────────────────────
+
+async function abrirDetalhes(paradaId) {
+  const r = await api(`/paradas/${paradaId}`);
+  const p = await r.json();
+  const nome = p.nome_maquina || `Máquina ${p.inventory_number}`;
+
+  $('detalhes-titulo').textContent = `Detalhes — ${nome}`;
+
+  const just = p.justificativas && p.justificativas[0];
+  $('detalhes-corpo').innerHTML = `
+    <div class="detalhe-bloco">
+      <div class="detalhe-titulo">Parada</div>
+      <div class="detalhe-row"><span>Máquina</span><span>${nome} (${p.inventory_number})</span></div>
+      <div class="detalhe-row"><span>Início</span><span>${fmtDt(p.inicio)}</span></div>
+      <div class="detalhe-row"><span>Fim</span><span>${fmtDt(p.fim)}</span></div>
+      <div class="detalhe-row"><span>Duração</span><span>${fmtDuracao(p.duracao_min)}</span></div>
+    </div>
+    ${just ? `
+    <div class="detalhe-bloco">
+      <div class="detalhe-titulo">Justificativa</div>
+      <div class="detalhe-row"><span>Categoria</span><span>${just.categoria}</span></div>
+      <div class="detalhe-row"><span>Responsável</span><span>${just.responsavel}</span></div>
+      <div class="detalhe-row"><span>Descrição</span><span>${just.descricao || '—'}</span></div>
+      <div class="detalhe-row"><span>Registrado em</span><span>${fmtDt(just.criado_em)}</span></div>
+    </div>` : '<p style="color:var(--text-muted)">Sem justificativa registrada.</p>'}
+  `;
+
+  $('modal-detalhes').classList.remove('hidden');
+}
+
+function fecharDetalhes() { $('modal-detalhes').classList.add('hidden'); }
+$('detalhes-fechar').addEventListener('click', fecharDetalhes);
+$('modal-detalhes').addEventListener('click', e => { if (e.target === $('modal-detalhes')) fecharDetalhes(); });
 
 // ── USUÁRIOS ───────────────────────────────────────────────────────────────
 
