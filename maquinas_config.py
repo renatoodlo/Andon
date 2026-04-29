@@ -28,5 +28,12 @@ MAQUINAS = {
 }
 
 
-def nome_maquina(inventory_number: str) -> str:
+def nome_maquina(inventory_number: str, conn=None) -> str:
+    """Retorna nome da máquina. Consulta banco se conn fornecido, senão usa dict local."""
+    if conn is not None:
+        row = conn.execute(
+            "SELECT nome FROM maquinas WHERE inventory_number = ?", (str(inventory_number),)
+        ).fetchone()
+        if row:
+            return row[0]
     return MAQUINAS.get(str(inventory_number), f'Máquina {inventory_number}')

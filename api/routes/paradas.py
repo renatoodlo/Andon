@@ -33,12 +33,11 @@ def listar_paradas(
 
     with get_conn() as conn:
         rows = conn.execute(sql, params).fetchall()
-
-    result = []
-    for r in rows:
-        d = dict(r)
-        d["nome_maquina"] = nome_maquina(d["inventory_number"])
-        result.append(d)
+        result = []
+        for r in rows:
+            d = dict(r)
+            d["nome_maquina"] = nome_maquina(d["inventory_number"], conn)
+            result.append(d)
     return result
 
 
@@ -54,6 +53,6 @@ def detalhe_parada(parada_id: int, usuario=Depends(get_usuario_atual)):
             "SELECT * FROM justificativas WHERE parada_id = ? ORDER BY inicio_just",
             (parada_id,)
         ).fetchall()
-    d = dict(parada)
-    d["nome_maquina"] = nome_maquina(d["inventory_number"])
+        d = dict(parada)
+        d["nome_maquina"] = nome_maquina(d["inventory_number"], conn)
     return {**d, "justificativas": [dict(j) for j in justs]}

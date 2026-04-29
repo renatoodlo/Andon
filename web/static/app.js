@@ -96,16 +96,20 @@ function mostrarDashboard() {
 function mostrarAba(aba) {
   $('aba-paradas').classList.toggle('hidden', aba !== 'paradas');
   $('aba-usuarios').classList.toggle('hidden', aba !== 'usuarios');
+  $('aba-configuracoes').classList.toggle('hidden', aba !== 'configuracoes');
   $('aba-detalhes').classList.add('hidden');
   $('nav-paradas').classList.toggle('active', aba === 'paradas');
   $('nav-usuarios').classList.toggle('active', aba === 'usuarios');
+  $('nav-configuracoes').classList.toggle('active', aba === 'configuracoes');
 
-  if (aba === 'paradas')  carregarParadas();
-  if (aba === 'usuarios') carregarUsuarios();
+  if (aba === 'paradas')       carregarParadas();
+  if (aba === 'usuarios')      carregarUsuarios();
+  if (aba === 'configuracoes') carregarConfiguracoes();
 }
 
-$('nav-paradas').addEventListener('click',  () => mostrarAba('paradas'));
-$('nav-usuarios').addEventListener('click', () => mostrarAba('usuarios'));
+$('nav-paradas').addEventListener('click',       () => mostrarAba('paradas'));
+$('nav-usuarios').addEventListener('click',      () => mostrarAba('usuarios'));
+$('nav-configuracoes').addEventListener('click', () => mostrarAba('configuracoes'));
 
 // ── FILTROS ────────────────────────────────────────────────────────────────
 
@@ -640,6 +644,179 @@ async function excluirUsuario(id, nome) {
     alert('Erro ao alterar usuário');
   }
 }
+
+// ── CONFIGURAÇÕES ──────────────────────────────────────────────────────────
+
+async function carregarConfiguracoes() {
+  await Promise.all([carregarPerfil(), carregarThresholds(), carregarMaquinasCfg()]);
+}
+
+// ── Perfil ──────────────────────────────────────────────────────────────────
+
+async function carregarPerfil() {
+  try {
+    const r = await api('/me');
+    if (!r.ok) return;
+    const d = await r.json();
+    $('cfg-nome').value = d.nome || '';
+    $('cfg-senha-atual').value = '';
+    $('cfg-senha-nova').value = '';
+    $('cfg-senha-confirmar').value = '';
+  } catch (_) {}
+}
+
+$('form-perfil').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('cfg-perfil-erro').classList.add('hidden');
+  $('cfg-perfil-ok').classList.add('hidden');
+
+  const nome    = $('cfg-nome').value.trim();
+  const atual   = $('cfg-senha-atual').value;
+  const nova    = $('cfg-senha-nova').value;
+  const confirm = $('cfg-senha-confirmar').value;
+
+  if (nova && nova !== confirm) {
+    $('cfg-perfil-erro').textContent = 'As senhas não coincidem';
+    $('cfg-perfil-erro').classList.remove('hidden');
+    return;
+  }
+
+  const body = {};
+  if (nome) body.nome = nome;
+  if (nova)  { body.senha_atual = atual; body.senha_nova = nova; }
+
+  try {
+    const r = await api('/me', { method: 'PUT', body: JSON.stringify(body) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Erro ao salvar');
+    $('cfg-perfil-ok').classList.remove('hidden');
+    $('cfg-senha-atual').value = '';
+    $('cfg-senha-nova').value = '';
+    $('cfg-senha-confirmar').value = '';
+    // atualiza nome na sidebar
+    if (nome) { USUARIO = nome; $('user-name').textContent = nome; $('user-avatar').textContent = iniciais(nome); }
+  } catch (err) {
+    $('cfg-perfil-erro').textContent = err.message;
+    $('cfg-perfil-erro').classList.remove('hidden');
+  }
+});
+
+// ── Thresholds ───────────────────────────────────────────────────────────────
+
+async function carregarThresholds() {
+  try {
+    const r = await api('/configuracoes');
+    if (!r.ok) return;
+    const d = await r.json();
+    const val = parseInt(d.urgente_minutos) || 30;
+    $('cfg-urgente-range').value = val;
+    $('cfg-urgente-val').textContent = val;
+  } catch (_) {}
+}
+
+$('cfg-urgente-range').addEventListener('input', () => {
+  $('cfg-urgente-val').textContent = $('cfg-urgente-range').value;
+});
+
+$('form-thresholds').addEventListener('submit', async e => {
+  e.preventDefault();
+  $('cfg-thresh-ok').classList.add('hidden');
+  try {
+    const r = await api('/configuracoes', {
+      method: 'PUT',
+      body: JSON.stringify({ urgente_minutos: $('cfg-urgente-range').value }),
+    });
+    if (!r.ok) throw new Error();
+    $('cfg-thresh-ok').classList.remove('hidden');
+    setTimeout(() => $('cfg-thresh-ok').classList.add('hidden'), 3000);
+  } catch (_) {}
+});
+
+// ── Máquinas ─────────────────────────────────────────────────────────────────
+
+async function carregarMaquinasCfg() {
+  try {
+    const r = await api('/maquinas');
+    if (!r.ok) return;
+    renderMaquinasCfg(await r.json());
+  } catch (_) {}
+}
+
+function renderMaquinasCfg(lista) {
+  $('cfg-lista-maquinas').innerHTML = lista.map(m => `
+    <div class="cfg-maq-item" data-inv="${m.inventory_number}">
+      <span class="cfg-maq-inv">${m.inventory_number}</span>
+      <input class="cfg-maq-nome-input" value="${m.nome}" data-original="${m.nome}"
+        onchange="salvarNomeMaquina('${m.inventory_number}', this)" />
+      <button class="cfg-maq-save" onclick="salvarNomeMaquina('${m.inventory_number}', this.previousElementSibling)">Salvar</button>
+      <button class="cfg-maq-del" title="Remover" onclick="removerMaquina('${m.inventory_number}')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>
+        </svg>
+      </button>
+    </div>
+  `).join('');
+
+  // mostra botão salvar ao editar
+  $('cfg-lista-maquinas').querySelectorAll('.cfg-maq-nome-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      inp.nextElementSibling.classList.toggle('visible', inp.value !== inp.dataset.original);
+    });
+  });
+}
+
+async function salvarNomeMaquina(inv, input) {
+  const nome = input.value.trim();
+  if (!nome) return;
+  try {
+    const r = await api(`/maquinas/${inv}`, { method: 'PUT', body: JSON.stringify({ nome }) });
+    if (r.ok) {
+      input.dataset.original = nome;
+      input.nextElementSibling.classList.remove('visible');
+    }
+  } catch (_) {}
+}
+
+async function removerMaquina(inv) {
+  if (!confirm(`Remover máquina ${inv}?`)) return;
+  try {
+    await api(`/maquinas/${inv}`, { method: 'DELETE' });
+    carregarMaquinasCfg();
+  } catch (_) {}
+}
+
+$('cfg-btn-add-maquina').addEventListener('click', () => {
+  $('cfg-maquinas-form-wrap').classList.remove('hidden');
+  $('cfg-maq-inv').focus();
+});
+$('cfg-btn-maq-cancelar').addEventListener('click', () => {
+  $('cfg-maquinas-form-wrap').classList.add('hidden');
+  $('cfg-maq-inv').value = '';
+  $('cfg-maq-nome').value = '';
+  $('cfg-maq-erro').classList.add('hidden');
+});
+$('cfg-btn-maq-salvar').addEventListener('click', async () => {
+  $('cfg-maq-erro').classList.add('hidden');
+  const inv  = $('cfg-maq-inv').value.trim();
+  const nome = $('cfg-maq-nome').value.trim();
+  if (!inv || !nome) {
+    $('cfg-maq-erro').textContent = 'Preencha o InventoryNumber e o nome';
+    $('cfg-maq-erro').classList.remove('hidden');
+    return;
+  }
+  try {
+    const r = await api('/maquinas', { method: 'POST', body: JSON.stringify({ inventory_number: inv, nome }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.detail || 'Erro');
+    $('cfg-maquinas-form-wrap').classList.add('hidden');
+    $('cfg-maq-inv').value = '';
+    $('cfg-maq-nome').value = '';
+    carregarMaquinasCfg();
+  } catch (err) {
+    $('cfg-maq-erro').textContent = err.message;
+    $('cfg-maq-erro').classList.remove('hidden');
+  }
+});
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 

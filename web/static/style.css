@@ -1226,6 +1226,123 @@ button:disabled { opacity: .5; cursor: default; pointer-events: none; }
 ::-webkit-scrollbar-thumb { background: rgba(66,228,217,0.15); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(66,228,217,0.3); }
 
+/* ── CONFIGURAÇÕES ─────────────────────────────────────── */
+.cfg-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.cfg-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.cfg-card-full { grid-column: 1 / -1; }
+
+.cfg-card-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.cfg-form { display: flex; flex-direction: column; gap: 14px; }
+.cfg-divider { height: 1px; background: var(--border); }
+.cfg-actions { display: flex; justify-content: flex-end; padding-top: 4px; }
+.cfg-ok {
+  font-size: 12px;
+  color: var(--success);
+  padding: 6px 10px;
+  background: rgba(34,185,117,0.08);
+  border: 1px solid rgba(34,185,117,0.2);
+  border-radius: var(--r-md);
+}
+
+.cfg-threshold-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+.cfg-range {
+  flex: 1;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.cfg-threshold-val {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 60px;
+  text-align: right;
+}
+
+.cfg-maq-add { display: flex; flex-direction: column; gap: 8px; }
+.cfg-maq-add-row { display: flex; gap: 8px; align-items: center; }
+
+.cfg-maq-list { display: flex; flex-direction: column; gap: 6px; }
+.cfg-maq-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+.cfg-maq-inv {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 70px;
+}
+.cfg-maq-nome-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  color: var(--text);
+  font-family: var(--font-body, inherit);
+  padding: 0;
+  outline: none;
+}
+.cfg-maq-nome-input:focus {
+  color: var(--accent);
+}
+.cfg-maq-save {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--accent);
+  background: rgba(66,228,217,0.08);
+  color: var(--accent);
+  cursor: pointer;
+  display: none;
+}
+.cfg-maq-nome-input:focus ~ .cfg-maq-save,
+.cfg-maq-save.visible { display: block; }
+.cfg-maq-del {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color .12s, background .12s;
+}
+.cfg-maq-del:hover { color: var(--danger); background: rgba(255,77,94,0.08); }
+
 /* ── DETALHES FULL-PAGE ────────────────────────────────── */
 .det-breadcrumb {
   display: flex;

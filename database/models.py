@@ -35,6 +35,16 @@ CREATE TABLE IF NOT EXISTS justificativas (
     criado_por    INTEGER NOT NULL REFERENCES usuarios(id),
     criado_em     TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
+
+CREATE TABLE IF NOT EXISTS maquinas (
+    inventory_number TEXT PRIMARY KEY,
+    nome             TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS configuracoes (
+    chave TEXT PRIMARY KEY,
+    valor TEXT NOT NULL
+);
 """
 
 
@@ -61,6 +71,24 @@ def init_db():
         )
         conn.commit()
         print("✅ Usuário padrão criado — login: admin | senha: admin123")
+
+    # Semeia tabela maquinas a partir de maquinas_config.py se vazia
+    cur = conn.execute("SELECT COUNT(*) FROM maquinas")
+    if cur.fetchone()[0] == 0:
+        from maquinas_config import MAQUINAS
+        conn.executemany(
+            "INSERT OR IGNORE INTO maquinas (inventory_number, nome) VALUES (?, ?)",
+            MAQUINAS.items()
+        )
+        conn.commit()
+        print(f"✅ {len(MAQUINAS)} máquinas importadas de maquinas_config.py")
+
+    # Valores padrão de configuração
+    defaults = [("urgente_minutos", "30")]
+    conn.executemany(
+        "INSERT OR IGNORE INTO configuracoes (chave, valor) VALUES (?, ?)", defaults
+    )
+    conn.commit()
 
     conn.close()
     print(f"✅ Banco inicializado: {os.path.abspath(DB_PATH)}")

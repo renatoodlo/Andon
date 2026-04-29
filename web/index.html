@@ -170,12 +170,11 @@
         </svg>
         <span>Usuários</span>
       </div>
-      <div class="sidebar-item sidebar-item-soon supervisor-only hidden" id="nav-configuracoes">
+      <div class="sidebar-item supervisor-only hidden" id="nav-configuracoes">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4.8a7 7 0 0 0-2.1-1.2L14 3h-4l-.4 2.5a7 7 0 0 0-2.1 1.2L5.1 6 3.1 9.4l2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.4-.8a7 7 0 0 0 2.1 1.2L10 21h4l.4-2.5a7 7 0 0 0 2.1-1.2l2.4.8 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/>
         </svg>
         <span>Configurações</span>
-        <span class="sidebar-soon-badge">em breve</span>
       </div>
 
       <div class="sidebar-footer">
@@ -469,6 +468,99 @@
   </div>
 
   <!-- modal-detalhes removido: substituído por #aba-detalhes full-page -->
+
+  <!-- ABA CONFIGURAÇÕES (supervisor only) -->
+  <main id="aba-configuracoes" class="bw-main hidden">
+    <div class="bw-topbar">
+      <div>
+        <div class="u-eyebrow">▸ Administração</div>
+        <div class="bw-page-title">Configurações</div>
+      </div>
+    </div>
+
+    <div class="cfg-grid">
+
+      <!-- PERFIL -->
+      <div class="cfg-card">
+        <div class="cfg-card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>
+          Perfil
+        </div>
+        <form id="form-perfil" class="cfg-form">
+          <div class="field">
+            <label class="field-label">Nome exibido</label>
+            <input type="text" id="cfg-nome" class="input" placeholder="Seu nome completo" />
+          </div>
+          <div class="cfg-divider"></div>
+          <div class="field">
+            <label class="field-label">Senha atual</label>
+            <input type="password" id="cfg-senha-atual" class="input" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+          <div class="field">
+            <label class="field-label">Nova senha</label>
+            <input type="password" id="cfg-senha-nova" class="input" placeholder="Mínimo 4 caracteres" autocomplete="new-password" />
+          </div>
+          <div class="field">
+            <label class="field-label">Confirmar nova senha</label>
+            <input type="password" id="cfg-senha-confirmar" class="input" placeholder="Repita a nova senha" autocomplete="new-password" />
+          </div>
+          <p id="cfg-perfil-erro" class="erro hidden"></p>
+          <p id="cfg-perfil-ok" class="cfg-ok hidden">Perfil atualizado com sucesso.</p>
+          <div class="cfg-actions">
+            <button type="submit" class="btn btn-primary">Salvar perfil</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- THRESHOLDS -->
+      <div class="cfg-card">
+        <div class="cfg-card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          Thresholds
+        </div>
+        <form id="form-thresholds" class="cfg-form">
+          <div class="field">
+            <label class="field-label">Minutos para parada urgente</label>
+            <div class="cfg-threshold-row">
+              <input type="range" id="cfg-urgente-range" min="5" max="120" step="5" value="30" class="cfg-range" />
+              <div class="cfg-threshold-val"><span id="cfg-urgente-val">30</span> min</div>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:6px">
+              Paradas não justificadas acima desse tempo aparecem em destaque vermelho.
+            </div>
+          </div>
+          <p id="cfg-thresh-ok" class="cfg-ok hidden">Configuração salva.</p>
+          <div class="cfg-actions">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- MÁQUINAS -->
+      <div class="cfg-card cfg-card-full">
+        <div class="cfg-card-title" style="justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V10l5 3V10l5 3V8l8 4v9z"/><path d="M7 17h2M11 17h2M15 17h2"/></svg>
+            Máquinas
+          </div>
+          <button id="cfg-btn-add-maquina" class="btn btn-ghost btn-sm">+ Adicionar</button>
+        </div>
+
+        <div id="cfg-maquinas-form-wrap" class="cfg-maq-add hidden">
+          <div class="cfg-maq-add-row">
+            <input type="text" id="cfg-maq-inv" class="input" placeholder="InventoryNumber" style="width:160px" />
+            <input type="text" id="cfg-maq-nome" class="input" placeholder="Nome exibido" style="flex:1" />
+            <button id="cfg-btn-maq-salvar" class="btn btn-primary btn-sm">Salvar</button>
+            <button id="cfg-btn-maq-cancelar" class="btn btn-ghost btn-sm">Cancelar</button>
+          </div>
+          <p id="cfg-maq-erro" class="erro hidden"></p>
+        </div>
+
+        <div id="cfg-lista-maquinas" class="cfg-maq-list"></div>
+      </div>
+
+    </div>
+  </main>
 
   <script src="/static/app.js"></script>
 </body>
