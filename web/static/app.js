@@ -345,40 +345,139 @@ $('form-just').addEventListener('submit', async e => {
   }
 });
 
-// ── MODAL DETALHES ─────────────────────────────────────────────────────────
+// ── DETALHES FULL-PAGE ─────────────────────────────────────────────────────
+
+let _detParadaId = null;
 
 async function abrirDetalhes(paradaId) {
+  _detParadaId = paradaId;
   const r = await api(`/paradas/${paradaId}`);
   const p = await r.json();
-  const nome = p.nome_maquina || `Máquina ${p.inventory_number}`;
+  const nome      = p.nome_maquina || `Máquina ${p.inventory_number}`;
+  const inv       = p.inventory_number || '';
+  const just      = p.justificativas && p.justificativas[0];
+  const justificado = p.status_just === 'JUSTIFICADO';
 
-  $('detalhes-titulo').textContent = `Detalhes — ${nome}`;
+  // breadcrumb
+  $('det-bc-id').textContent = `PRD-${String(p.id).padStart(4, '0')}`;
+  $('det-id-label').textContent = `#PRD-${String(p.id).padStart(4, '0')}`;
 
-  const just = p.justificativas && p.justificativas[0];
-  $('detalhes-corpo').innerHTML = `
-    <div class="detalhe-bloco">
-      <div class="detalhe-titulo">Parada</div>
-      <div class="detalhe-row"><span>Máquina</span><span>${nome} (${p.inventory_number})</span></div>
-      <div class="detalhe-row"><span>Início</span><span>${fmtDt(p.inicio)}</span></div>
-      <div class="detalhe-row"><span>Fim</span><span>${fmtDt(p.fim)}</span></div>
-      <div class="detalhe-row"><span>Duração</span><span style="color:var(--accent);font-weight:700">${fmtDuracao(p.duracao_min)}</span></div>
+  // badge status
+  const badge = $('det-badge-status');
+  if (justificado) {
+    badge.className = 'badge badge-success';
+    badge.innerHTML = '<span class="pip"></span>Justificada';
+  } else {
+    badge.className = 'badge badge-danger';
+    badge.innerHTML = '<span class="pip"></span>Não justificada';
+  }
+
+  // hero
+  $('det-maquina').innerHTML = nome + (p.modelo ? ` <span>${p.modelo}</span>` : '');
+  $('det-meta').innerHTML = [inv, p.linha ? `Linha ${p.linha}` : '', p.area || '']
+    .filter(Boolean)
+    .map((s, i, a) => i < a.length - 1 ? `${s}<span class="det-hero-meta-dot">·</span>` : s)
+    .join('');
+
+  // duração hero
+  const minutos = p.duracao_min || 0;
+  const h = Math.floor(minutos / 60);
+  const m = minutos % 60;
+  $('det-duracao').innerHTML = h > 0
+    ? `${h}<span>h</span> ${m}<span>m</span>`
+    : `${m}<span>m</span>`;
+  $('det-dur-sub').textContent = `${minutos} minutos`;
+
+  // timeline bar
+  const inicio = p.inicio ? new Date(p.inicio) : null;
+  const fim    = p.fim    ? new Date(p.fim)    : null;
+  if (inicio && fim) {
+    const dayStart = new Date(inicio); dayStart.setHours(0,0,0,0);
+    const pct = t => ((t - dayStart) / 86400000) * 100;
+    const left = pct(inicio).toFixed(2);
+    const width = (pct(fim) - pct(inicio)).toFixed(2);
+    $('det-tl-seg').style.left  = `${left}%`;
+    $('det-tl-seg').style.width = `${width}%`;
+    const fmtH = d => d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    $('det-tl-label').textContent = `▲ ${fmtH(inicio)} → ${fmtH(fim)}`;
+  }
+
+  // justificativa card
+  if (just) {
+    const ini = iniciais(just.responsavel || '');
+    $('det-just-body').innerHTML = `
+      <div class="det-just-grid">
+        <div>
+          <div class="det-field-label">Categoria</div>
+          <div class="det-cat-pill">${just.categoria}</div>
+        </div>
+        <div>
+          <div class="det-field-label">Responsável</div>
+          <div class="det-resp-row">
+            <div class="det-resp-avatar">${ini}</div>
+            <div>
+              <div class="det-resp-name">${just.responsavel}</div>
+              <div class="det-resp-role">Técnico · Manutenção</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      ${just.descricao ? `
+      <div>
+        <div class="det-field-label">Descrição</div>
+        <div class="det-desc-box">${just.descricao}</div>
+      </div>` : ''}
+      <div class="det-just-foot">
+        <span>Registrado em ${fmtDt(just.criado_em)}</span>
+        <button class="btn btn-ghost btn-sm" id="det-just-editar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          Editar
+        </button>
+      </div>
+    `;
+    $('det-card-title-success', $('det-just-card'));
+  } else {
+    $('det-just-body').innerHTML = `
+      <div class="det-no-just">Sem justificativa registrada para esta parada.</div>
+    `;
+  }
+
+  // audit log
+  const fmtH = d => d ? new Date(d).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—';
+  const logs = [];
+  if (just) logs.push({ cor: 'var(--success)', acao: 'Justificativa registrada', quem: just.responsavel, hora: fmtH(just.criado_em) });
+  if (p.fim)    logs.push({ cor: 'var(--accent)', acao: 'Parada finalizada',  quem: 'Sistema MES', hora: fmtH(p.fim) });
+  if (p.inicio) logs.push({ cor: 'var(--danger)', acao: 'Parada detectada',   quem: 'Sistema MES', hora: fmtH(p.inicio) });
+
+  $('det-log').innerHTML = logs.map(l => `
+    <div class="det-log-item">
+      <div class="det-log-dot" style="background:${l.cor};box-shadow:0 0 8px ${l.cor}"></div>
+      <div style="flex:1;min-width:0">
+        <div class="det-log-action">${l.acao}</div>
+        <div class="det-log-who">${l.quem}</div>
+      </div>
+      <div class="det-log-time">${l.hora}</div>
     </div>
-    ${just ? `
-    <div class="detalhe-bloco" style="border-color:rgba(34,185,117,0.2);background:rgba(34,185,117,0.04)">
-      <div class="detalhe-titulo">Justificativa</div>
-      <div class="detalhe-row"><span>Categoria</span><span>${just.categoria}</span></div>
-      <div class="detalhe-row"><span>Responsável</span><span>${just.responsavel}</span></div>
-      <div class="detalhe-row"><span>Descrição</span><span>${just.descricao || '—'}</span></div>
-      <div class="detalhe-row"><span>Registrado em</span><span>${fmtDt(just.criado_em)}</span></div>
-    </div>` : '<p style="color:var(--text-muted);font-size:13px">Sem justificativa registrada.</p>'}
-  `;
+  `).join('');
 
-  $('modal-detalhes').classList.remove('hidden');
+  // "editar justificativa" action button
+  $('det-btn-editar').onclick = () => { fecharDetalhes(); abrirModal(paradaId); };
+
+  // show aba
+  $('aba-paradas').classList.add('hidden');
+  $('aba-usuarios').classList.add('hidden');
+  $('aba-detalhes').classList.remove('hidden');
 }
 
-function fecharDetalhes() { $('modal-detalhes').classList.add('hidden'); }
-$('detalhes-fechar').addEventListener('click', fecharDetalhes);
-$('modal-detalhes').addEventListener('click', e => { if (e.target === $('modal-detalhes')) fecharDetalhes(); });
+function fecharDetalhes() {
+  $('aba-detalhes').classList.add('hidden');
+  $('aba-paradas').classList.remove('hidden');
+  // reactivate sidebar nav
+  $('nav-paradas').classList.add('active');
+  $('nav-usuarios').classList.remove('active');
+}
+
+$('det-bc-back').addEventListener('click', fecharDetalhes);
 
 // ── USUÁRIOS ───────────────────────────────────────────────────────────────
 

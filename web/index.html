@@ -207,6 +207,85 @@
       </section>
     </main>
 
+    <!-- ABA DETALHES -->
+    <main id="aba-detalhes" class="bw-main hidden">
+      <!-- breadcrumb -->
+      <nav class="det-breadcrumb">
+        <span id="det-bc-back" class="det-bc-link">Paradas</span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        <span class="det-bc-link">Histórico</span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        <span id="det-bc-id" class="det-bc-current">—</span>
+      </nav>
+
+      <!-- HERO -->
+      <div class="det-hero">
+        <div class="det-hero-glow"></div>
+        <div class="det-hero-top">
+          <div class="det-hero-left">
+            <div class="det-hero-badges">
+              <span id="det-badge-status" class="badge badge-success"><span class="pip"></span>Justificada</span>
+              <span id="det-id-label" class="det-id-label">#PRD-0000</span>
+            </div>
+            <h1 id="det-maquina" class="det-hero-title">—</h1>
+            <div id="det-meta" class="det-hero-meta"></div>
+          </div>
+          <div class="det-hero-right">
+            <div class="det-dur-label">Duração total</div>
+            <div id="det-duracao" class="det-dur-val">—</div>
+            <div id="det-dur-sub" class="det-dur-sub"></div>
+          </div>
+        </div>
+        <!-- timeline bar -->
+        <div class="det-tl-wrap">
+          <div class="det-tl-ticks">
+            <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
+          </div>
+          <div class="det-tl-bar">
+            <div id="det-tl-seg" class="det-tl-seg" style="left:0%;width:0%"></div>
+          </div>
+          <div id="det-tl-label" class="det-tl-label"></div>
+        </div>
+      </div>
+
+      <!-- BODY GRID -->
+      <div class="det-body">
+        <!-- Left: justificativa -->
+        <div class="det-card" id="det-just-card">
+          <div class="det-card-title det-card-title-success">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="m9 11 3 3L22 4"/></svg>
+            Justificativa registrada
+          </div>
+          <div id="det-just-body" class="det-just-body"></div>
+        </div>
+
+        <!-- Right: histórico + ações -->
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="det-card">
+            <div class="det-card-title">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.6a1 1 0 0 1 .7.3l4.4 4.3a1 1 0 0 1 .3.7V19a2 2 0 0 1-2 2z"/></svg>
+              Histórico
+            </div>
+            <div id="det-log" class="det-log"></div>
+          </div>
+
+          <div class="det-card">
+            <div class="det-card-title">Ações</div>
+            <div class="det-actions">
+              <button id="det-btn-editar" class="btn btn-ghost" style="justify-content:flex-start">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Editar justificativa
+              </button>
+              <button class="btn btn-ghost" style="justify-content:flex-start" onclick="fecharDetalhes()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M5 12l7-7m-7 7 7 7"/></svg>
+                Voltar para paradas
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
     <!-- ABA USUÁRIOS -->
     <main id="aba-usuarios" class="bw-main hidden">
       <div class="bw-topbar">
@@ -353,16 +432,7 @@
     </div>
   </div>
 
-  <!-- MODAL DETALHES -->
-  <div id="modal-detalhes" class="modal-overlay hidden">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="detalhes-titulo">Detalhes da Parada</h3>
-        <button id="detalhes-fechar" class="btn-fechar">✕</button>
-      </div>
-      <div id="detalhes-corpo" style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;"></div>
-    </div>
-  </div>
+  <!-- modal-detalhes removido: substituído por #aba-detalhes full-page -->
 
   <script src="/static/app.js"></script>
 </body>
