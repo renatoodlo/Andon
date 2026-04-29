@@ -54,74 +54,275 @@ input, select, textarea { font-family: inherit; color: inherit; }
 h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.01em; }
 .hidden { display: none !important; }
 
-/* ── LOGIN ─────────────────────────────────────────────── */
+/* ── LOGIN SPLIT ───────────────────────────────────────── */
 .tela-login {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
   min-height: 100vh;
-  padding: 1rem;
-  position: relative;
   overflow: hidden;
 }
 
-.tela-login::before {
-  content: "";
+/* ── LOGIN PANEL ESQUERDA ──────────────────────────────── */
+.login-panel-brand {
+  position: relative;
+  background: linear-gradient(135deg, #051723 0%, #0a2940 60%, #0e3382 130%);
+  padding: 56px 52px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.swoosh {
   position: absolute;
-  inset: 0;
-  background: radial-gradient(800px 500px at 50% 20%, rgba(66,228,217,0.07), transparent 70%);
   pointer-events: none;
 }
 
-.login-inner {
+.swoosh-tr { right: -120px; top: -80px; }
+.swoosh-bl { left: -200px; bottom: -200px; }
+
+.lp-top {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 26px;
-}
-
-.login-brand {
+  z-index: 1;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
-.login-brand-mark {
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
+.lp-brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background: var(--accent);
   color: var(--bw-dark-blue);
   display: grid;
   place-items: center;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 22px;
-  letter-spacing: -0.04em;
+  font-size: 16px;
+  flex-shrink: 0;
 }
 
-.login-brand-text {
+.lp-wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 14px;
+  color: var(--bw-white);
+}
+
+.lp-hero {
+  position: relative;
+  z-index: 1;
+}
+
+.lp-eyebrow {
+  font-family: var(--font-display);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.lp-title {
+  font-family: var(--font-display);
+  font-size: 64px;
+  line-height: 1.0;
+  color: var(--bw-white);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: 22px;
+}
+
+.lp-dot { color: var(--accent); }
+
+.lp-desc {
+  font-size: 15px;
+  color: rgba(230,241,245,0.7);
+  max-width: 380px;
+  line-height: 1.55;
+}
+
+/* Status strip */
+.lp-status {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 20px;
+  padding: 16px 20px;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  width: fit-content;
+}
+
+.lp-stat-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.lp-stat-value {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lp-dot-live {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+  flex-shrink: 0;
+}
+
+.lp-divider {
+  width: 1px;
+  background: var(--border);
+  align-self: stretch;
+}
+
+/* ── LOGIN PANEL DIREITA ───────────────────────────────── */
+.login-panel-form {
+  background: var(--bg);
   display: flex;
   flex-direction: column;
-  line-height: 1.1;
+  justify-content: center;
+  padding: 56px 72px;
+  position: relative;
 }
 
-.login-brand-co {
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  color: var(--text-muted);
+.lpf-corner {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   font-weight: 600;
 }
 
-.login-brand-app {
+.lpf-content { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+
+.lpf-header { margin-bottom: 32px; }
+
+.lpf-eyebrow {
   font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--bw-white);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 
+.lpf-heading {
+  font-size: 28px;
+  color: var(--bw-white);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+
+.lpf-sub { font-size: 14px; color: var(--text-muted); }
+
+#form-login {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 380px;
+}
+
+.lpf-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lpf-input {
+  padding: 13px 14px;
+  font-size: 14px;
+}
+
+.lpf-remember {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-top: 4px;
+  user-select: none;
+}
+
+.lpf-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--accent);
+  background: var(--accent);
+  display: grid;
+  place-items: center;
+  color: var(--bw-dark-blue);
+  flex-shrink: 0;
+}
+
+.lpf-btn-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 20px;
+  border-radius: var(--r-md);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--accent);
+  color: var(--bw-dark-blue);
+  transition: background .15s;
+  margin-top: 4px;
+}
+.lpf-btn-submit:hover { background: var(--accent-h); }
+
+.lpf-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding-top: 32px;
+  margin-top: auto;
+}
+
+/* ── MOBILE: colapsa pra card simples ──────────────────── */
+@media (max-width: 900px) {
+  .tela-login {
+    grid-template-columns: 1fr;
+  }
+  .login-panel-brand { display: none; }
+  .login-panel-form {
+    padding: 40px 24px;
+    min-height: 100vh;
+    justify-content: center;
+  }
+}
+
+/* legado — mantidos para não quebrar nada */
 .login-box {
   width: 400px;
   background: linear-gradient(180deg, #0e2a3d 0%, #0a2030 100%);

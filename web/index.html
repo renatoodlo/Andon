@@ -10,47 +10,103 @@
 
   <!-- LOGIN -->
   <div id="tela-login" class="tela-login hidden">
-    <div class="login-inner">
-      <div class="login-brand">
-        <div class="login-brand-mark">B</div>
-        <div class="login-brand-text">
-          <span class="login-brand-co">BorgWarner</span>
-          <span class="login-brand-app">Andon MEP</span>
-        </div>
+
+    <!-- ESQUERDA: Brand panel -->
+    <div class="login-panel-brand">
+      <!-- Swoosh motif top-right -->
+      <svg class="swoosh swoosh-tr" width="600" height="600" viewBox="0 0 600 600" fill="none">
+        <path d="M -100 600 Q 300 500 700 100" stroke="#42e4d9" stroke-width="1.4" opacity="0.10" fill="none"/>
+        <path d="M -92 600 Q 318 478 708 82"   stroke="#42e4d9" stroke-width="1.4" opacity="0.16" fill="none"/>
+        <path d="M -84 600 Q 336 456 716 64"   stroke="#42e4d9" stroke-width="1.4" opacity="0.22" fill="none"/>
+        <path d="M -76 600 Q 354 434 724 46"   stroke="#42e4d9" stroke-width="1.4" opacity="0.28" fill="none"/>
+        <path d="M -68 600 Q 372 412 732 28"   stroke="#42e4d9" stroke-width="1.4" opacity="0.34" fill="none"/>
+        <path d="M -60 600 Q 390 390 740 10"   stroke="#42e4d9" stroke-width="1.4" opacity="0.40" fill="none"/>
+      </svg>
+      <!-- Swoosh motif bottom-left rotated -->
+      <svg class="swoosh swoosh-bl" width="600" height="600" viewBox="0 0 600 600" fill="none" style="transform:rotate(180deg);opacity:0.5">
+        <path d="M -100 600 Q 300 500 700 100" stroke="#42e4d9" stroke-width="1.4" opacity="0.10" fill="none"/>
+        <path d="M -92 600 Q 318 478 708 82"   stroke="#42e4d9" stroke-width="1.4" opacity="0.16" fill="none"/>
+        <path d="M -84 600 Q 336 456 716 64"   stroke="#42e4d9" stroke-width="1.4" opacity="0.22" fill="none"/>
+        <path d="M -76 600 Q 354 434 724 46"   stroke="#42e4d9" stroke-width="1.4" opacity="0.28" fill="none"/>
+        <path d="M -68 600 Q 372 412 732 28"   stroke="#42e4d9" stroke-width="1.4" opacity="0.34" fill="none"/>
+        <path d="M -60 600 Q 390 390 740 10"   stroke="#42e4d9" stroke-width="1.4" opacity="0.40" fill="none"/>
+      </svg>
+
+      <!-- Brand mark topo -->
+      <div class="lp-top">
+        <div class="lp-brand-mark">B</div>
+        <span class="lp-wordmark">BorgWarner</span>
       </div>
 
-      <div class="login-box">
-        <div class="login-box-header">
-          <h2>Bem-vindo de volta</h2>
-          <p>Entre para gerenciar paradas e justificativas</p>
+      <!-- Título central -->
+      <div class="lp-hero">
+        <div class="lp-eyebrow">Manufacturing Execution Platform</div>
+        <h1 class="lp-title">Andon<br>MEP<span class="lp-dot">.</span></h1>
+        <p class="lp-desc">Justificativa e rastreabilidade de paradas em tempo real para o chão de fábrica.</p>
+      </div>
+
+      <!-- Status strip rodapé -->
+      <div class="lp-status">
+        <div class="lp-stat">
+          <div class="lp-stat-label">Status sistema</div>
+          <div class="lp-stat-value">
+            <span class="lp-dot-live"></span>Operacional
+          </div>
         </div>
+        <div class="lp-divider"></div>
+        <div class="lp-stat">
+          <div class="lp-stat-label">Máquinas online</div>
+          <div class="lp-stat-value"><span style="color:var(--accent)" id="login-stat-maquinas">—</span><span style="color:var(--text-dim)"> / —</span></div>
+        </div>
+        <div class="lp-divider"></div>
+        <div class="lp-stat">
+          <div class="lp-stat-label">Paradas pendentes</div>
+          <div class="lp-stat-value" style="color:var(--danger)" id="login-stat-pendentes">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIREITA: Form -->
+    <div class="login-panel-form">
+      <div class="lpf-corner">v2.4.1 · Plant 04</div>
+
+      <div class="lpf-content">
+        <div class="lpf-header">
+          <div class="lpf-eyebrow">▸ Acesso seguro</div>
+          <h2 class="lpf-heading">Entrar</h2>
+          <p class="lpf-sub">Use suas credenciais BorgWarner para continuar.</p>
+        </div>
+
         <form id="form-login">
           <div class="field">
             <label class="field-label">Usuário</label>
-            <div class="field-wrap">
-              <span class="field-icon">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/>
-                </svg>
-              </span>
-              <input type="text" id="login-user" class="input with-icon" placeholder="seu.usuario" required autocomplete="username" />
-            </div>
+            <input type="text" id="login-user" class="input lpf-input" placeholder="primeiro.ultimo" required autocomplete="username" />
           </div>
           <div class="field">
-            <label class="field-label">Senha</label>
-            <div class="field-wrap">
-              <span class="field-icon">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>
-                </svg>
-              </span>
-              <input type="password" id="login-senha" class="input with-icon" placeholder="••••••••" required autocomplete="current-password" />
+            <div class="lpf-label-row">
+              <label class="field-label">Senha</label>
             </div>
+            <input type="password" id="login-senha" class="input lpf-input" placeholder="••••••••" required autocomplete="current-password" />
           </div>
-          <button type="submit" class="btn btn-primary btn-lg" style="margin-top:4px">Entrar</button>
+
+          <label class="lpf-remember">
+            <span class="lpf-check">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 7"/></svg>
+            </span>
+            Manter sessão por 8 horas
+          </label>
+
+          <button type="submit" class="btn lpf-btn-submit">
+            Entrar no sistema
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
           <p id="login-erro" class="erro hidden"></p>
         </form>
-        <div class="login-version">Manufacturing Execution Platform · v2.0</div>
+      </div>
+
+      <div class="lpf-footer">
+        <span>© 2026 BorgWarner Inc.</span>
+        <span>Suporte TI · Ramal 4040</span>
       </div>
     </div>
   </div>
