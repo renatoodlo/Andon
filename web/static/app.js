@@ -96,6 +96,7 @@ function mostrarDashboard() {
 function mostrarAba(aba) {
   $('aba-paradas').classList.toggle('hidden', aba !== 'paradas');
   $('aba-usuarios').classList.toggle('hidden', aba !== 'usuarios');
+  $('aba-detalhes').classList.add('hidden');
   $('nav-paradas').classList.toggle('active', aba === 'paradas');
   $('nav-usuarios').classList.toggle('active', aba === 'usuarios');
 
@@ -210,12 +211,24 @@ function cardHTML(p) {
     duracaoHTML = `<div class="card-duracao">${fmtDuracao(p.duracao_min)}</div>`;
   }
 
-  let btnHTML = '';
+  let footerHTML = '';
   if (justificado) {
-    btnHTML = `<button class="btn-detalhes" data-id="${p.id}">Ver detalhes</button>`;
+    const just = p.justificativas && p.justificativas[0];
+    const catLabel  = just ? just.categoria  : '—';
+    const respLabel = just ? just.responsavel : '—';
+    const descLabel = just && just.descricao ? just.descricao : '';
+    footerHTML = `
+      <div class="card-just-preview">
+        <div class="card-just-row">
+          <span class="card-just-cat">${catLabel}</span>
+          <span class="card-just-resp">${respLabel}</span>
+        </div>
+        ${descLabel ? `<div class="card-just-desc">${descLabel}</div>` : ''}
+      </div>
+      <button class="btn-detalhes" data-id="${p.id}">Ver detalhes</button>`;
   } else {
     const label = emAndamento ? '⏳ Em andamento' : 'Justificar';
-    btnHTML = `<button class="btn-justificar" data-id="${p.id}" ${btnDisabled}>${label}</button>`;
+    footerHTML = `<button class="btn-justificar" data-id="${p.id}" ${btnDisabled}>${label}</button>`;
   }
 
   return `
@@ -230,7 +243,7 @@ function cardHTML(p) {
     ${duracaoHTML}
     <div class="card-row"><span>Início</span><span>${fmtDt(p.inicio)}</span></div>
     <div class="card-row"><span>Fim</span><span>${fmtDt(p.fim)}</span></div>
-    ${btnHTML}
+    ${footerHTML}
   </div>`;
 }
 

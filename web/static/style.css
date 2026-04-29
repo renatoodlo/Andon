@@ -758,6 +758,50 @@ button:disabled { opacity: .5; cursor: default; pointer-events: none; }
 }
 .btn-detalhes:hover { background: rgba(34,185,117,0.08); border-color: var(--success); }
 
+.card-just-preview {
+  background: rgba(34,185,117,0.05);
+  border: 1px solid rgba(34,185,117,0.15);
+  border-radius: var(--r-md);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+.card-just-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.card-just-cat {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--warning);
+  background: rgba(245,165,36,0.12);
+  border: 1px solid rgba(245,165,36,0.25);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.card-just-resp {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-just-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 /* ── TABELA USUÁRIOS ───────────────────────────────────── */
 #tabela-usuarios-wrap { overflow-x: auto; border-radius: var(--r-md); }
 
