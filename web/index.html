@@ -267,42 +267,55 @@
 
   </div>
 
-  <!-- MODAL JUSTIFICATIVA -->
-  <div id="modal" class="modal-overlay hidden">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="modal-titulo">Justificar Parada</h3>
-        <button id="modal-fechar" class="btn-fechar">✕</button>
-      </div>
-      <div class="modal-info" id="modal-info"></div>
-      <form id="form-just">
-        <input type="hidden" id="just-parada-id" />
-        <label>Categoria
-          <select id="just-categoria" required>
-            <option value="">Selecione...</option>
-            <option>Troca de ferramenta</option>
-            <option>Manutenção corretiva</option>
-            <option>Manutenção preventiva</option>
-            <option>Setup / Ajuste</option>
-            <option>Falta de material</option>
-            <option>Falta de operador</option>
-            <option>Qualidade</option>
-            <option>Reunião / Treinamento</option>
-            <option>Outro</option>
-          </select>
-        </label>
-        <label>Responsável
-          <input type="text" id="just-responsavel" placeholder="Nome do responsável" required />
-        </label>
-        <label>Descrição (opcional)
-          <textarea id="just-descricao" rows="3" placeholder="Detalhes da parada..."></textarea>
-        </label>
-        <div class="modal-actions">
-          <button type="button" id="btn-cancelar" class="btn btn-ghost">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Salvar Justificativa</button>
+  <!-- MODAL JUSTIFICATIVA — drawer ousado -->
+  <div id="modal" class="drawer-overlay hidden">
+    <div class="drawer">
+      <div class="drawer-rail"></div>
+      <div class="drawer-head">
+        <div class="drawer-head-text">
+          <div class="drawer-eyebrow">▸ Nova Justificativa</div>
+          <h3 id="modal-titulo" class="drawer-title"></h3>
+          <div id="modal-info" class="drawer-meta"></div>
         </div>
-        <p id="just-erro" class="erro hidden"></p>
-      </form>
+        <button id="modal-fechar" class="btn btn-ghost btn-sm" style="padding:6px;flex-shrink:0;align-self:flex-start">✕</button>
+      </div>
+      <div class="drawer-body">
+        <form id="form-just">
+          <input type="hidden" id="just-parada-id" />
+          <input type="hidden" id="just-categoria" />
+
+          <div class="drawer-section">
+            <div class="drawer-section-title">Janela da parada</div>
+            <div id="drawer-timeline" class="drawer-timeline"></div>
+          </div>
+
+          <div class="drawer-section">
+            <div class="drawer-section-title">Categoria</div>
+            <div id="cat-grid" class="cat-grid"></div>
+            <p id="just-cat-erro" class="erro hidden" style="margin-top:6px">Selecione uma categoria</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Responsável</label>
+            <input type="text" id="just-responsavel" class="input" placeholder="Nome do técnico" required />
+          </div>
+
+          <div class="field">
+            <label class="field-label">Descrição</label>
+            <textarea id="just-descricao" class="textarea" rows="3" placeholder="Detalhes adicionais..." maxlength="500"></textarea>
+            <div class="char-counter"><span id="just-char-count">0</span> / 500</div>
+          </div>
+
+          <p id="just-erro" class="erro hidden"></p>
+        </form>
+      </div>
+      <div class="drawer-foot">
+        <div class="drawer-foot-hint">ℹ Será registrado em seu nome</div>
+        <div style="display:flex;gap:10px">
+          <button type="button" id="btn-cancelar" class="btn btn-ghost">Cancelar</button>
+          <button type="submit" form="form-just" class="btn btn-primary drawer-submit">Confirmar ›</button>
+        </div>
+      </div>
     </div>
   </div>
 

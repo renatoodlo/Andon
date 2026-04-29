@@ -234,7 +234,37 @@ function cardHTML(p) {
   </div>`;
 }
 
-// ── MODAL JUSTIFICATIVA ────────────────────────────────────────────────────
+// ── DRAWER JUSTIFICATIVA ───────────────────────────────────────────────────
+
+const CATEGORIAS_JUST = [
+  { id: 'ferramenta',  label: 'Troca de ferramenta' },
+  { id: 'corretiva',   label: 'Manutenção corretiva' },
+  { id: 'preventiva',  label: 'Manutenção preventiva' },
+  { id: 'setup',       label: 'Setup / Ajuste' },
+  { id: 'material',    label: 'Falta de material' },
+  { id: 'operador',    label: 'Falta de operador' },
+  { id: 'qualidade',   label: 'Qualidade' },
+  { id: 'treinamento', label: 'Reunião / Treinamento' },
+  { id: 'outro',       label: 'Outro' },
+];
+
+function _renderCatGrid(selected) {
+  $('cat-grid').innerHTML = CATEGORIAS_JUST.map(c => `
+    <div class="cat-chip${selected === c.id ? ' active' : ''}" data-cat="${c.id}">${c.label}</div>
+  `).join('');
+}
+
+$('cat-grid').addEventListener('click', e => {
+  const chip = e.target.closest('.cat-chip');
+  if (!chip) return;
+  $('just-categoria').value = chip.dataset.cat;
+  $('cat-grid').querySelectorAll('.cat-chip').forEach(c => c.classList.toggle('active', c === chip));
+  $('just-cat-erro').classList.add('hidden');
+});
+
+$('just-descricao').addEventListener('input', () => {
+  $('just-char-count').textContent = $('just-descricao').value.length;
+});
 
 async function abrirModal(paradaId) {
   const r = await api(`/paradas/${paradaId}`);
@@ -242,16 +272,45 @@ async function abrirModal(paradaId) {
   const nome = p.nome_maquina || `Máquina ${p.inventory_number}`;
 
   $('just-parada-id').value = p.id;
-  $('modal-titulo').textContent = `Justificar — ${nome}`;
-  $('modal-info').innerHTML = `
-    <strong>Início:</strong> ${fmtDt(p.inicio)}&emsp;
-    <strong>Fim:</strong> ${fmtDt(p.fim)}&emsp;
-    <strong>Duração:</strong> ${fmtDuracao(p.duracao_min)}
-  `;
-  $('just-categoria').value   = '';
+  $('just-categoria').value = '';
   $('just-responsavel').value = '';
-  $('just-descricao').value   = '';
+  $('just-descricao').value = '';
+  $('just-char-count').textContent = '0';
   $('just-erro').classList.add('hidden');
+  $('just-cat-erro').classList.add('hidden');
+
+  $('modal-titulo').textContent = nome;
+
+  const inv = p.inventory_number || '';
+  const status = p.status_just === 'JUSTIFICADO'
+    ? `<span style="color:var(--accent)">● Justificado</span>`
+    : `<span style="color:var(--danger)">● Não justificada</span>`;
+  $('modal-info').innerHTML = `<span>${inv}</span><span class="drawer-meta-dot"></span>${status}`;
+
+  // timeline
+  const inicio = p.inicio ? new Date(p.inicio) : null;
+  const fim    = p.fim    ? new Date(p.fim)    : null;
+  const fmtHora = d => d ? d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '—';
+  const fmtData = d => d ? d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  const durStr  = fmtDuracao(p.duracao_min);
+  $('drawer-timeline').innerHTML = `
+    <div class="dt-col">
+      <div class="dt-label">Início</div>
+      <div class="dt-time">${fmtHora(inicio)}</div>
+      <div class="dt-date">${fmtData(inicio)}</div>
+    </div>
+    <div class="dt-dur">
+      <div class="dt-dur-val">${durStr}</div>
+      <div class="dt-dur-label">duração</div>
+    </div>
+    <div class="dt-col right">
+      <div class="dt-label">Fim</div>
+      <div class="dt-time">${fmtHora(fim)}</div>
+      <div class="dt-date">${fmtData(fim)}</div>
+    </div>
+  `;
+
+  _renderCatGrid('');
   $('modal').classList.remove('hidden');
 }
 
@@ -264,6 +323,10 @@ $('modal').addEventListener('click', e => { if (e.target === $('modal')) fecharM
 $('form-just').addEventListener('submit', async e => {
   e.preventDefault();
   $('just-erro').classList.add('hidden');
+  if (!$('just-categoria').value) {
+    $('just-cat-erro').classList.remove('hidden');
+    return;
+  }
   const body = {
     parada_id:   Number($('just-parada-id').value),
     categoria:   $('just-categoria').value,
