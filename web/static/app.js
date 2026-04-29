@@ -26,6 +26,10 @@ function fmtDuracao(min) {
   return `${Math.floor(min / 60)}h ${min % 60}min`;
 }
 
+function iniciais(nome) {
+  return nome.trim().split(/\s+/).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+}
+
 // ── LOGIN ──────────────────────────────────────────────────────────────────
 
 $('form-login').addEventListener('submit', async e => {
@@ -55,6 +59,7 @@ $('form-login').addEventListener('submit', async e => {
 // ── LOGOUT ─────────────────────────────────────────────────────────────────
 
 $('btn-logout').addEventListener('click', () => {
+  if (!confirm('Sair do sistema?')) return;
   TOKEN = PERFIL = USUARIO = '';
   localStorage.clear();
   clearInterval(REFRESH_TIMER);
@@ -69,10 +74,14 @@ $('btn-logout').addEventListener('click', () => {
 function mostrarDashboard() {
   $('tela-login').classList.add('hidden');
   $('tela-dashboard').classList.remove('hidden');
-  $('header-usuario').textContent = `👤 ${USUARIO} (${PERFIL})`;
+
+  // Preenche info do usuário na sidebar
+  $('user-name').textContent = USUARIO;
+  $('user-role').textContent = PERFIL;
+  $('user-avatar').textContent = iniciais(USUARIO);
 
   if (PERFIL === 'supervisor') {
-    $('nav-usuarios').classList.remove('hidden');
+    document.querySelectorAll('.supervisor-only').forEach(el => el.classList.remove('hidden'));
   }
 
   mostrarAba('paradas');
@@ -99,12 +108,18 @@ $('nav-usuarios').addEventListener('click', () => mostrarAba('usuarios'));
 
 // ── FILTROS ────────────────────────────────────────────────────────────────
 
-$('btn-filtrar').addEventListener('click', carregarParadas);
+$('btn-filtrar').addEventListener('click', () => {
+  $('painel-filtros').classList.toggle('hidden');
+});
+
+$('btn-aplicar').addEventListener('click', carregarParadas);
+
 $('btn-limpar').addEventListener('click', () => {
   $('filtro-status').value      = '';
   $('filtro-data-inicio').value = '';
   $('filtro-data-fim').value    = '';
   $('filtro-maquina').value     = '';
+  $('painel-filtros').classList.add('hidden');
   carregarParadas();
 });
 
@@ -126,7 +141,7 @@ function buildQuery() {
 async function carregarParadas() {
   try {
     const r = await api('/paradas' + buildQuery());
-    if (r.status === 401) { $('btn-logout').click(); return; }
+    if (r.status === 401) { TOKEN = ''; localStorage.clear(); location.reload(); return; }
     renderParadas(await r.json());
   } catch (err) {
     console.error('Erro ao carregar paradas:', err);
@@ -135,10 +150,25 @@ async function carregarParadas() {
 
 function renderParadas(paradas) {
   const pendentes = paradas.filter(p => p.status_just === 'NAO_JUSTIFICADO' && p.fim);
-  const badge = $('badge-pendentes');
 
-  if (pendentes.length > 0) {
-    badge.textContent = `${pendentes.length} pendente${pendentes.length > 1 ? 's' : ''}`;
+  // Atualiza subtitle da página
+  const total = paradas.length;
+  const nJust = pendentes.length;
+  $('paradas-sub').textContent = `${total} parada${total !== 1 ? 's' : ''} · ${nJust} pendente${nJust !== 1 ? 's' : ''}`;
+
+  // Badge na sidebar
+  const sidebarCount = $('sidebar-count');
+  if (nJust > 0) {
+    sidebarCount.textContent = nJust;
+    sidebarCount.classList.remove('hidden');
+  } else {
+    sidebarCount.classList.add('hidden');
+  }
+
+  // Badge no painel de filtros
+  const badge = $('badge-pendentes');
+  if (nJust > 0) {
+    badge.textContent = `${nJust} pendente${nJust > 1 ? 's' : ''}`;
     badge.classList.remove('hidden');
     $('secao-pendentes').classList.remove('hidden');
     $('grid-pendentes').innerHTML = pendentes.map(cardHTML).join('');
@@ -162,31 +192,46 @@ function cardHTML(p) {
   const emAndamento = !p.fim;
   const justificado = p.status_just === 'JUSTIFICADO';
   const btnDisabled = (emAndamento || justificado) ? 'disabled' : '';
-  const btnLabel    = emAndamento ? '⏳ Em andamento' : justificado ? '✅ Justificado' : 'Justificar';
   const nome        = p.nome_maquina || `Máquina ${p.inventory_number}`;
 
+  let badgeHTML = '';
+  if (justificado) {
+    badgeHTML = `<span class="badge badge-success"><span class="pip"></span> Justificado</span>`;
+  } else if (emAndamento) {
+    badgeHTML = `<span class="badge badge-warning"><span class="pip"></span> Em andamento</span>`;
+  } else {
+    badgeHTML = `<span class="badge badge-danger"><span class="pip"></span> Pendente</span>`;
+  }
+
+  let duracaoHTML = '';
+  if (emAndamento) {
+    duracaoHTML = `<div class="card-duracao" style="font-size:14px;color:var(--text-muted)">⏳ Em andamento</div>`;
+  } else {
+    duracaoHTML = `<div class="card-duracao">${fmtDuracao(p.duracao_min)}</div>`;
+  }
+
+  let btnHTML = '';
+  if (justificado) {
+    btnHTML = `<button class="btn-detalhes" data-id="${p.id}">Ver detalhes</button>`;
+  } else {
+    const label = emAndamento ? '⏳ Em andamento' : 'Justificar';
+    btnHTML = `<button class="btn-justificar" data-id="${p.id}" ${btnDisabled}>${label}</button>`;
+  }
+
   return `
-  <div class="card ${p.status_just === 'JUSTIFICADO' ? 'justificado' : 'nao-justificado'}">
+  <div class="card ${justificado ? 'justificado' : 'nao-justificado'}">
     <div class="card-header">
       <div>
-        <div class="card-maquina">🏭 ${nome}</div>
+        <div class="card-maquina">${nome}</div>
         <div class="card-inv">${p.inventory_number}</div>
       </div>
-      ${badgeHTML(p.status_just)}
+      ${badgeHTML}
     </div>
-    <div class="card-duracao">${emAndamento ? '⏳ Em andamento' : fmtDuracao(p.duracao_min)}</div>
+    ${duracaoHTML}
     <div class="card-row"><span>Início</span><span>${fmtDt(p.inicio)}</span></div>
     <div class="card-row"><span>Fim</span><span>${fmtDt(p.fim)}</span></div>
-    ${justificado
-      ? `<button class="btn-detalhes" data-id="${p.id}">🔍 Ver detalhes</button>`
-      : `<button class="btn-justificar" data-id="${p.id}" ${btnDisabled}>${btnLabel}</button>`
-    }
+    ${btnHTML}
   </div>`;
-}
-
-function badgeHTML(s) {
-  if (s === 'JUSTIFICADO') return `<span class="badge jus">✅ Justificado</span>`;
-  return `<span class="badge nao">🔴 Não Justificado</span>`;
 }
 
 // ── MODAL JUSTIFICATIVA ────────────────────────────────────────────────────
@@ -199,13 +244,13 @@ async function abrirModal(paradaId) {
   $('just-parada-id').value = p.id;
   $('modal-titulo').textContent = `Justificar — ${nome}`;
   $('modal-info').innerHTML = `
-    <strong>Início:</strong> ${fmtDt(p.inicio)}<br>
-    <strong>Fim:</strong> ${fmtDt(p.fim)}<br>
+    <strong>Início:</strong> ${fmtDt(p.inicio)}&emsp;
+    <strong>Fim:</strong> ${fmtDt(p.fim)}&emsp;
     <strong>Duração:</strong> ${fmtDuracao(p.duracao_min)}
   `;
-  $('just-categoria').value  = '';
+  $('just-categoria').value   = '';
   $('just-responsavel').value = '';
-  $('just-descricao').value  = '';
+  $('just-descricao').value   = '';
   $('just-erro').classList.add('hidden');
   $('modal').classList.remove('hidden');
 }
@@ -253,16 +298,16 @@ async function abrirDetalhes(paradaId) {
       <div class="detalhe-row"><span>Máquina</span><span>${nome} (${p.inventory_number})</span></div>
       <div class="detalhe-row"><span>Início</span><span>${fmtDt(p.inicio)}</span></div>
       <div class="detalhe-row"><span>Fim</span><span>${fmtDt(p.fim)}</span></div>
-      <div class="detalhe-row"><span>Duração</span><span>${fmtDuracao(p.duracao_min)}</span></div>
+      <div class="detalhe-row"><span>Duração</span><span style="color:var(--accent);font-weight:700">${fmtDuracao(p.duracao_min)}</span></div>
     </div>
     ${just ? `
-    <div class="detalhe-bloco">
+    <div class="detalhe-bloco" style="border-color:rgba(34,185,117,0.2);background:rgba(34,185,117,0.04)">
       <div class="detalhe-titulo">Justificativa</div>
       <div class="detalhe-row"><span>Categoria</span><span>${just.categoria}</span></div>
       <div class="detalhe-row"><span>Responsável</span><span>${just.responsavel}</span></div>
       <div class="detalhe-row"><span>Descrição</span><span>${just.descricao || '—'}</span></div>
       <div class="detalhe-row"><span>Registrado em</span><span>${fmtDt(just.criado_em)}</span></div>
-    </div>` : '<p style="color:var(--text-muted)">Sem justificativa registrada.</p>'}
+    </div>` : '<p style="color:var(--text-muted);font-size:13px">Sem justificativa registrada.</p>'}
   `;
 
   $('modal-detalhes').classList.remove('hidden');
@@ -286,18 +331,31 @@ async function carregarUsuarios() {
 
 function renderUsuarios(usuarios) {
   const tbody = $('tbody-usuarios');
-  tbody.innerHTML = usuarios.map(u => `
+  tbody.innerHTML = usuarios.map(u => {
+    const ini = iniciais(u.nome);
+    return `
     <tr>
-      <td>${u.nome}</td>
-      <td>${u.login}</td>
-      <td><span class="tag-perfil ${u.perfil}">${u.perfil}</span></td>
-      <td><span class="${u.ativo ? 'tag-ativo' : 'tag-inativo'}">${u.ativo ? 'Ativo' : 'Inativo'}</span></td>
-      <td class="acoes">
-        <button class="btn-edit" onclick="abrirModalUsuario(${u.id}, '${u.nome}', '${u.login}', '${u.perfil}')">Editar</button>
-        <button class="btn-danger" onclick="excluirUsuario(${u.id}, '${u.nome}')">${u.ativo ? 'Desativar' : 'Ativar'}</button>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="user-row-avatar">${ini}</div>
+          <span style="font-weight:500">${u.nome}</span>
+        </div>
       </td>
-    </tr>
-  `).join('');
+      <td style="color:var(--text-muted);font-size:12px">${u.login}</td>
+      <td><span class="tag-perfil tag-${u.perfil}">${u.perfil}</span></td>
+      <td>
+        ${u.ativo
+          ? `<span class="badge badge-success"><span class="pip"></span> Ativo</span>`
+          : `<span class="badge badge-danger"><span class="pip"></span> Inativo</span>`}
+      </td>
+      <td>
+        <div class="acoes">
+          <button class="btn btn-ghost btn-sm" onclick="abrirModalUsuario(${u.id}, '${u.nome}', '${u.login}', '${u.perfil}')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="excluirUsuario(${u.id}, '${u.nome}')">${u.ativo ? 'Desativar' : 'Ativar'}</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 $('btn-novo-usuario').addEventListener('click', () => abrirModalUsuario());
@@ -322,15 +380,19 @@ $('modal-usuario').addEventListener('click', e => { if (e.target === $('modal-us
 $('form-usuario').addEventListener('submit', async e => {
   e.preventDefault();
   $('usuario-erro').classList.add('hidden');
-  const id    = $('usuario-id').value;
-  const body  = {
+  const id   = $('usuario-id').value;
+  const body = {
     nome:   $('usuario-nome').value.trim(),
     perfil: $('usuario-perfil').value,
   };
   if (!id) body.login = $('usuario-login').value.trim();
   const senha = $('usuario-senha').value;
   if (senha) body.senha = senha;
-  else if (!id) { $('usuario-erro').textContent = 'Senha obrigatória para novo usuário'; $('usuario-erro').classList.remove('hidden'); return; }
+  else if (!id) {
+    $('usuario-erro').textContent = 'Senha obrigatória para novo usuário';
+    $('usuario-erro').classList.remove('hidden');
+    return;
+  }
 
   try {
     const r = id
