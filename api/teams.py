@@ -74,6 +74,20 @@ def notificar_retorno(inventory_number: str, duracao_min: Optional[int]) -> Opti
     return None
 
 
+def notificar_justificativa(
+    inventory_number: str,
+    duracao_min: Optional[int],
+    categoria: str,
+    responsavel: str,
+) -> None:
+    duracao = f"~{duracao_min} min" if duracao_min is not None else "—"
+    msg = (
+        f"✅ JUSTIFICADO | InventoryNumber: {inventory_number} | "
+        f"{duracao} | {categoria} | {responsavel}"
+    )
+    _enviar_webhook(msg, cor="00AA00")
+
+
 def atualizar_mensagem_justificada(
     msg_id: str,
     inventory_number: str,

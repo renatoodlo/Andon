@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from api.auth import get_usuario_atual
-from api.teams import atualizar_mensagem_justificada
+from api.teams import notificar_justificativa
 from database.models import get_conn
 from maquinas_config import nome_maquina
 
@@ -39,13 +39,11 @@ def criar_justificativa(body: JustificativaCreate, usuario=Depends(get_usuario_a
         )
         conn.commit()
 
-    if parada["teams_msg_id"]:
-        atualizar_mensagem_justificada(
-            msg_id=parada["teams_msg_id"],
-            inventory_number=parada["inventory_number"],
-            duracao_min=parada["duracao_min"],
-            categoria=body.categoria,
-            responsavel=body.responsavel,
-        )
+    notificar_justificativa(
+        inventory_number=parada["inventory_number"],
+        duracao_min=parada["duracao_min"],
+        categoria=body.categoria,
+        responsavel=body.responsavel,
+    )
 
     return {"ok": True, "status_parada": "JUSTIFICADO"}
