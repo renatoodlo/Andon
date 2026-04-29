@@ -63,8 +63,11 @@ def _fechar_parada(inventory_number, fim, duracao_min, teams_msg_id):
         with get_conn() as conn:
             conn.execute(
                 """UPDATE paradas SET fim = ?, duracao_min = ?, teams_msg_id = ?
-                   WHERE inventory_number = ? AND fim IS NULL
-                   ORDER BY id DESC LIMIT 1""",
+                   WHERE id = (
+                       SELECT id FROM paradas
+                       WHERE inventory_number = ? AND fim IS NULL
+                       ORDER BY id DESC LIMIT 1
+                   )""",
                 (fim_str, duracao_min, teams_msg_id, inventory_number)
             )
             conn.commit()
