@@ -211,29 +211,58 @@
     <main id="aba-usuarios" class="bw-main hidden">
       <div class="bw-topbar">
         <div>
-          <div class="bw-page-title">Usuários</div>
-          <div class="bw-page-sub">Gestão de perfis e acessos</div>
+          <div class="u-eyebrow">▸ Administração</div>
+          <div class="bw-page-title">Usuários &amp; Permissões</div>
         </div>
-        <button id="btn-novo-usuario" class="btn btn-primary btn-sm">
+        <button id="btn-novo-usuario" class="btn btn-primary u-btn-add">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          Novo Usuário
+          Adicionar
         </button>
       </div>
 
-      <div id="tabela-usuarios-wrap">
-        <table class="tabela-usuarios">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Login</th>
-              <th>Perfil</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-usuarios"></tbody>
-        </table>
+      <!-- KPI bar -->
+      <div class="u-kpi-bar">
+        <div class="u-kpi-card">
+          <div class="u-kpi-label">Total</div>
+          <div class="u-kpi-value" id="kpi-total" style="color:var(--text)">0</div>
+          <div class="u-kpi-sub">cadastrados</div>
+          <div class="u-kpi-blob" style="background:var(--text)"></div>
+        </div>
+        <div class="u-kpi-card">
+          <div class="u-kpi-label">Supervisores</div>
+          <div class="u-kpi-value" id="kpi-supervisor" style="color:var(--accent)">0</div>
+          <div class="u-kpi-sub">perfil completo</div>
+          <div class="u-kpi-blob" style="background:var(--accent)"></div>
+        </div>
+        <div class="u-kpi-card">
+          <div class="u-kpi-label">Técnicos</div>
+          <div class="u-kpi-value" id="kpi-tecnico" style="color:var(--warning)">0</div>
+          <div class="u-kpi-sub">manutenção</div>
+          <div class="u-kpi-blob" style="background:var(--warning)"></div>
+        </div>
+        <div class="u-kpi-card">
+          <div class="u-kpi-label">Operadores</div>
+          <div class="u-kpi-value" id="kpi-operador" style="color:var(--bw-ocean-ultra)">0</div>
+          <div class="u-kpi-sub">chão de fábrica</div>
+          <div class="u-kpi-blob" style="background:var(--bw-ocean-ultra)"></div>
+        </div>
       </div>
+
+      <!-- Busca + filtros -->
+      <div class="u-search-bar">
+        <div class="u-search-wrap">
+          <svg class="u-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="text" id="u-busca" class="input u-search-input" placeholder="Buscar por nome ou login…" />
+        </div>
+        <div class="u-pills">
+          <span class="u-pill active" data-filtro="todos">Todos</span>
+          <span class="u-pill" data-filtro="ativos">Ativos</span>
+          <span class="u-pill" data-filtro="inativos">Inativos</span>
+        </div>
+      </div>
+
+      <!-- Cards grid -->
+      <div id="grid-usuarios" class="u-grid"></div>
     </main>
 
   </div>

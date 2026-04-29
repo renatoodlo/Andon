@@ -329,34 +329,82 @@ async function carregarUsuarios() {
   }
 }
 
+let _todosUsuarios = [];
+let _filtroPillAtivo = 'todos';
+
 function renderUsuarios(usuarios) {
-  const tbody = $('tbody-usuarios');
-  tbody.innerHTML = usuarios.map(u => {
+  _todosUsuarios = usuarios;
+
+  // KPI counts
+  const total      = usuarios.length;
+  const supervisor = usuarios.filter(u => u.perfil === 'supervisor').length;
+  const tecnico    = usuarios.filter(u => u.perfil === 'tecnico').length;
+  const operador   = usuarios.filter(u => u.perfil === 'operador').length;
+  const kpiTotal = $('kpi-total'); if (kpiTotal) kpiTotal.textContent = total;
+  const kpiSup   = $('kpi-supervisor'); if (kpiSup) kpiSup.textContent = supervisor;
+  const kpiTec   = $('kpi-tecnico'); if (kpiTec) kpiTec.textContent = tecnico;
+  const kpiOp    = $('kpi-operador'); if (kpiOp) kpiOp.textContent = operador;
+
+  _aplicarFiltros();
+}
+
+function _aplicarFiltros() {
+  const q = ($('u-busca') ? $('u-busca').value : '').toLowerCase().trim();
+  let lista = _todosUsuarios;
+  if (_filtroPillAtivo === 'ativos')   lista = lista.filter(u => u.ativo);
+  if (_filtroPillAtivo === 'inativos') lista = lista.filter(u => !u.ativo);
+  if (q) lista = lista.filter(u => u.nome.toLowerCase().includes(q) || u.login.toLowerCase().includes(q));
+  _renderCards(lista);
+}
+
+function _renderCards(lista) {
+  const grid = $('grid-usuarios');
+  if (!grid) return;
+  if (!lista.length) {
+    grid.innerHTML = `<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;padding:40px 0">Nenhum usuário encontrado</p>`;
+    return;
+  }
+  grid.innerHTML = lista.map(u => {
     const ini = iniciais(u.nome);
+    const perfilLabel = u.perfil.charAt(0).toUpperCase() + u.perfil.slice(1);
+    const badgeClass = u.ativo ? 'badge-success' : 'badge-danger';
+    const badgeLabel = u.ativo ? 'Ativo' : 'Inativo';
     return `
-    <tr>
-      <td>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="user-row-avatar">${ini}</div>
-          <span style="font-weight:500">${u.nome}</span>
+    <div class="u-card${u.ativo ? '' : ' inativo'}">
+      ${u.ativo ? '' : '<div class="u-card-stripe"></div>'}
+      <div class="u-card-avatar ${u.perfil}">${ini}</div>
+      <div class="u-card-info">
+        <div class="u-card-name-row">
+          <span class="u-card-name">${u.nome}</span>
+          <span class="badge ${badgeClass}"><span class="pip"></span>${badgeLabel}</span>
         </div>
-      </td>
-      <td style="color:var(--text-muted);font-size:12px">${u.login}</td>
-      <td><span class="tag-perfil tag-${u.perfil}">${u.perfil}</span></td>
-      <td>
-        ${u.ativo
-          ? `<span class="badge badge-success"><span class="pip"></span> Ativo</span>`
-          : `<span class="badge badge-danger"><span class="pip"></span> Inativo</span>`}
-      </td>
-      <td>
-        <div class="acoes">
-          <button class="btn btn-ghost btn-sm" onclick="abrirModalUsuario(${u.id}, '${u.nome}', '${u.login}', '${u.perfil}')">Editar</button>
-          <button class="btn btn-danger btn-sm" onclick="excluirUsuario(${u.id}, '${u.nome}')">${u.ativo ? 'Desativar' : 'Ativar'}</button>
+        <div class="u-card-meta">
+          <span class="u-card-login">@${u.login}</span>
+          <span>·</span>
+          <span>${perfilLabel}</span>
         </div>
-      </td>
-    </tr>`;
+      </div>
+      <div class="u-card-actions">
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalUsuario(${u.id}, '${u.nome}', '${u.login}', '${u.perfil}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="excluirUsuario(${u.id}, '${u.nome}')">${u.ativo ? 'Desativar' : 'Ativar'}</button>
+      </div>
+    </div>`;
   }).join('');
 }
+
+// pill filter clicks
+document.querySelectorAll('.u-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.u-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    _filtroPillAtivo = pill.dataset.filtro || 'todos';
+    _aplicarFiltros();
+  });
+});
+
+// search input
+const _uBusca = $('u-busca');
+if (_uBusca) _uBusca.addEventListener('input', _aplicarFiltros);
 
 $('btn-novo-usuario').addEventListener('click', () => abrirModalUsuario());
 
