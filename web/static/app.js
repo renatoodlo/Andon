@@ -643,8 +643,21 @@ async function excluirUsuario(id, nome) {
 
 // ── INIT ───────────────────────────────────────────────────────────────────
 
+async function carregarStatusLogin() {
+  try {
+    const r = await fetch('/status');
+    if (!r.ok) return;
+    const d = await r.json();
+    const elMaq = $('login-stat-maquinas');
+    const elPend = $('login-stat-pendentes');
+    if (elMaq) elMaq.textContent = d.maquinas_com_historico;
+    if (elPend) elPend.textContent = d.paradas_pendentes;
+  } catch (_) {}
+}
+
 if (TOKEN) {
   mostrarDashboard();
 } else {
   $('tela-login').classList.remove('hidden');
+  carregarStatusLogin();
 }

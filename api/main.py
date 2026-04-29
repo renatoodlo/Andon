@@ -44,6 +44,27 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
     return {"access_token": token, "token_type": "bearer", "perfil": row["perfil"]}
 
 
+@app.get("/status")
+def status_publico():
+    """Endpoint público — usado na tela de login sem auth."""
+    with get_conn() as conn:
+        total_maquinas = conn.execute(
+            "SELECT COUNT(DISTINCT inventory_number) FROM paradas"
+        ).fetchone()[0] or 0
+        pendentes = conn.execute(
+            "SELECT COUNT(*) FROM paradas WHERE status_just = 'NAO_JUSTIFICADO' AND fim IS NOT NULL"
+        ).fetchone()[0] or 0
+        ativas = conn.execute(
+            "SELECT COUNT(*) FROM paradas WHERE fim IS NULL"
+        ).fetchone()[0] or 0
+    return {
+        "status": "operacional",
+        "maquinas_com_historico": total_maquinas,
+        "maquinas_ativas": ativas,
+        "paradas_pendentes": pendentes,
+    }
+
+
 @app.get("/")
 def index():
     return FileResponse("web/index.html")
