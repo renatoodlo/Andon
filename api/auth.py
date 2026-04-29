@@ -4,7 +4,10 @@ from jose import JWTError, jwt
 from passlib.hash import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from dotenv import load_dotenv
 from database.models import get_conn
+
+load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY", "troca_essa_chave")
 ALGORITHM  = "HS256"
@@ -31,9 +34,10 @@ def get_usuario_atual(token: str = Depends(oauth2_scheme)):
     )
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        usuario_id: int = payload.get("sub")
+        usuario_id = payload.get("sub")
         if usuario_id is None:
             raise erro
+        usuario_id = int(usuario_id)
     except JWTError:
         raise erro
 

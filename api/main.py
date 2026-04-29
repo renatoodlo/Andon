@@ -40,7 +40,7 @@ def login(form: OAuth2PasswordRequestForm = Depends()):
         ).fetchone()
     if not row or not verificar_senha(form.password, row["senha_hash"]):
         raise HTTPException(status_code=401, detail="Login ou senha inválidos")
-    token = criar_token({"sub": row["id"], "perfil": row["perfil"]})
+    token = criar_token({"sub": str(row["id"]), "perfil": row["perfil"]})
     return {"access_token": token, "token_type": "bearer", "perfil": row["perfil"]}
 
 
