@@ -85,7 +85,7 @@ function mostrarDashboard() {
     document.querySelectorAll('.supervisor-only').forEach(el => el.classList.remove('hidden'));
   }
 
-  mostrarAba('paradas');
+  mostrarAba('dashboard');
   clearInterval(REFRESH_TIMER);
   REFRESH_TIMER = setInterval(() => {
     if (!$('aba-paradas').classList.contains('hidden')) carregarParadas();
@@ -95,21 +95,25 @@ function mostrarDashboard() {
 // ── NAVEGAÇÃO ABAS ─────────────────────────────────────────────────────────
 
 function mostrarAba(aba) {
-  // protege abas restritas a supervisor
-  if ((aba === 'usuarios' || aba === 'configuracoes') && PERFIL !== 'supervisor') {
-    aba = 'paradas';
-  }
+  if ((aba === 'usuarios' || aba === 'configuracoes') && PERFIL !== 'supervisor') aba = 'dashboard';
+
+  $('aba-dashboard').classList.toggle('hidden', aba !== 'dashboard');
   $('aba-paradas').classList.toggle('hidden', aba !== 'paradas');
   $('aba-usuarios').classList.toggle('hidden', aba !== 'usuarios');
   $('aba-configuracoes').classList.toggle('hidden', aba !== 'configuracoes');
   $('aba-detalhes').classList.add('hidden');
+
+  $('nav-dashboard').classList.toggle('active', aba === 'dashboard');
   $('nav-paradas').classList.toggle('active', aba === 'paradas');
   $('nav-usuarios').classList.toggle('active', aba === 'usuarios');
   $('nav-configuracoes').classList.toggle('active', aba === 'configuracoes');
 
+  if (aba === 'dashboard')     carregarDashboard();
   if (aba === 'paradas')       carregarParadas();
   if (aba === 'usuarios')      carregarUsuarios();
   if (aba === 'configuracoes') carregarConfiguracoes();
+
+  if (aba !== 'dashboard') pararPollingMapa();
 }
 
 $('nav-paradas').addEventListener('click',       () => mostrarAba('paradas'));
@@ -836,6 +840,218 @@ async function carregarStatusLogin() {
     if (elPend) elPend.textContent = d.paradas_pendentes;
   } catch (_) {}
 }
+
+// ── DASHBOARD / FLOOR MAP ──────────────────────────────────────────────────
+
+const PLANTA = {
+  pc: {
+    label: 'Pass Car',
+    cells: [
+      {
+        id: 'CM11',
+        cols: 3,
+        machines: [
+          { inv: '7783', label: 'OP10\nNOVA', col: 1, row: 1 },
+          { inv: '7781', label: 'OP10A',      col: 2, row: 1 },
+          { inv: '7782', label: 'OP10B',      col: 3, row: 1 },
+          { inv: '7784', label: 'OP30',       col: 1, row: 2, colSpan: 3 },
+          { inv: '7786', label: 'RA13',       col: 1, row: 3 },
+          { inv: '7785', label: 'RA14',       col: 2, row: 3 },
+          { inv: null,   label: 'BL',         col: 3, row: 3, disabled: true },
+          { inv: '7787', label: 'OP70',       col: 1, row: 4, colSpan: 3 },
+        ]
+      }
+    ]
+  }
+};
+
+let SETOR_ATIVO = null;
+let MAPA_STATUS = {};
+let MAPA_TIMER  = null;
+let FILA_ABERTA = true;
+
+function carregarDashboard() {
+  atualizarSectorCards();
+}
+
+async function atualizarSectorCards() {
+  try {
+    const r = await api('/mapa/status');
+    if (!r.ok) return;
+    MAPA_STATUS = await r.json();
+    const maquinas = MAPA_STATUS.maquinas || {};
+
+    const pc_invs = PLANTA.pc.cells.flatMap(c => c.machines.filter(m => m.inv).map(m => m.inv));
+    const pc_par  = pc_invs.filter(inv => maquinas[inv]?.status === 'parada');
+    const pc_pend = pc_par.filter(inv => maquinas[inv]?.just === 'NAO_JUSTIFICADO');
+
+    $('sector-pc-op').textContent  = pc_invs.length - pc_par.length;
+    $('sector-pc-par').textContent = pc_par.length;
+    $('sector-pc-pend').textContent = pc_pend.length;
+
+    const badge = $('sector-pc-badge');
+    badge.textContent = pc_par.length;
+    badge.classList.toggle('hidden', pc_par.length === 0);
+  } catch (_) {}
+}
+
+function abrirSetor(setor) {
+  SETOR_ATIVO = setor;
+  const planta = PLANTA[setor];
+  $('dash-sectors').classList.add('hidden');
+  $('dash-map').classList.remove('hidden');
+  $('dash-map-title').textContent = `▸ ${planta.label}`;
+  renderFloorMap(setor);
+  iniciarPollingMapa();
+}
+
+function voltarSetores() {
+  pararPollingMapa();
+  SETOR_ATIVO = null;
+  $('dash-map').classList.add('hidden');
+  $('dash-sectors').classList.remove('hidden');
+  atualizarSectorCards();
+}
+
+function toggleFilaPanel() {
+  FILA_ABERTA = !FILA_ABERTA;
+  $('dm-fila').classList.toggle('hidden', !FILA_ABERTA);
+  $('btn-ocultar-fila').textContent = FILA_ABERTA ? 'Ocultar fila' : 'Mostrar fila';
+}
+
+function renderFloorMap(setor) {
+  const floor = $('dm-floor');
+  floor.innerHTML = '';
+  for (const cell of PLANTA[setor].cells) {
+    const cellEl = document.createElement('div');
+    cellEl.className = 'fm-cell';
+    cellEl.innerHTML = `<div class="fm-cell-label">${cell.id}</div>`;
+
+    const grid = document.createElement('div');
+    grid.className = 'fm-grid';
+    grid.style.gridTemplateColumns = `repeat(${cell.cols}, 1fr)`;
+
+    for (const m of cell.machines) {
+      const block = document.createElement('div');
+      block.className = 'fm-machine' + (m.disabled ? ' fm-machine-disabled' : '');
+      block.style.gridColumn = m.colSpan ? `${m.col} / span ${m.colSpan}` : String(m.col);
+      block.style.gridRow    = String(m.row);
+
+      if (m.inv) {
+        block.dataset.inv = m.inv;
+        block.onclick = () => { $('filtro-maquina').value = m.inv; mostrarAba('paradas'); };
+      }
+
+      const st = m.inv ? (MAPA_STATUS.maquinas || {})[m.inv] : null;
+      aplicarStatusMaquina(block, st);
+
+      block.innerHTML = `<span class="fm-machine-label">${m.label.replace('\n', '<br>')}</span>`;
+      if (st?.status === 'parada') {
+        const d = document.createElement('span');
+        d.className = 'fm-machine-dur';
+        d.textContent = fmtDuracao(st.duracao_min);
+        block.appendChild(d);
+      }
+      grid.appendChild(block);
+    }
+    cellEl.appendChild(grid);
+    floor.appendChild(cellEl);
+  }
+}
+
+function aplicarStatusMaquina(el, st) {
+  el.classList.remove('fm-operando', 'fm-parada', 'fm-urgente');
+  if (!st || st.status !== 'parada') {
+    el.classList.add('fm-operando');
+  } else if (st.just === 'NAO_JUSTIFICADO') {
+    el.classList.add('fm-urgente');
+  } else {
+    el.classList.add('fm-parada');
+  }
+}
+
+async function pollarMapa() {
+  if (!SETOR_ATIVO) return;
+  try {
+    const r = await api('/mapa/status');
+    if (!r.ok) return;
+    MAPA_STATUS = await r.json();
+    const maquinas = MAPA_STATUS.maquinas || {};
+
+    for (const cell of PLANTA[SETOR_ATIVO].cells) {
+      for (const m of cell.machines) {
+        if (!m.inv) continue;
+        const el = $('dm-floor').querySelector(`[data-inv="${m.inv}"]`);
+        if (!el) continue;
+        const st = maquinas[m.inv];
+        aplicarStatusMaquina(el, st);
+        let durEl = el.querySelector('.fm-machine-dur');
+        if (st?.status === 'parada') {
+          if (!durEl) { durEl = document.createElement('span'); durEl.className = 'fm-machine-dur'; el.appendChild(durEl); }
+          durEl.textContent = fmtDuracao(st.duracao_min);
+        } else if (durEl) { durEl.remove(); }
+      }
+    }
+
+    const invs    = PLANTA[SETOR_ATIVO].cells.flatMap(c => c.machines.filter(m => m.inv).map(m => m.inv));
+    const paradas = invs.filter(inv => maquinas[inv]?.status === 'parada');
+    const pend    = paradas.filter(inv => maquinas[inv]?.just === 'NAO_JUSTIFICADO');
+    $('dm-operando').textContent  = invs.length - paradas.length;
+    $('dm-paradas').textContent   = paradas.length;
+    $('dm-pendentes').textContent = pend.length;
+
+    atualizarFila(maquinas);
+    $('dash-map-sub').textContent = `Planta 04 · Atualizado às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+  } catch (_) {}
+}
+
+function atualizarFila(maquinas) {
+  const list  = $('dm-fila-list');
+  const ativas = Object.entries(maquinas)
+    .filter(([, st]) => st.status === 'parada')
+    .sort((a, b) => (b[1].duracao_min || 0) - (a[1].duracao_min || 0));
+
+  $('dm-fila-count').textContent = `${ativas.length} chamado${ativas.length !== 1 ? 's' : ''}`;
+
+  if (ativas.length === 0) {
+    list.innerHTML = '<div class="dfp-empty">Nenhuma parada ativa</div>';
+    return;
+  }
+
+  list.innerHTML = ativas.map(([inv, st]) => {
+    const nome    = nomeInvMapa(inv);
+    const urgente = st.just === 'NAO_JUSTIFICADO';
+    return `<div class="dfp-item${urgente ? ' dfp-item-urgente' : ''}" onclick="(function(){$('filtro-maquina').value='${inv}';mostrarAba('paradas')})()">
+      <div class="dfp-item-header">
+        <span class="dfp-item-nome">${nome}</span>
+        <span class="dfp-item-dur">${fmtDuracao(st.duracao_min)}</span>
+      </div>
+      <div class="dfp-item-status">${urgente ? 'Não justificado' : 'Em andamento'}</div>
+    </div>`;
+  }).join('');
+}
+
+function nomeInvMapa(inv) {
+  for (const planta of Object.values(PLANTA)) {
+    for (const cell of planta.cells) {
+      const m = cell.machines.find(m => m.inv === inv);
+      if (m) return `${cell.id} ${m.label.replace('\n', ' ')}`;
+    }
+  }
+  return inv;
+}
+
+function iniciarPollingMapa() {
+  pararPollingMapa();
+  pollarMapa();
+  MAPA_TIMER = setInterval(pollarMapa, 15000);
+}
+
+function pararPollingMapa() {
+  if (MAPA_TIMER) { clearInterval(MAPA_TIMER); MAPA_TIMER = null; }
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
 
 if (TOKEN) {
   mostrarDashboard();

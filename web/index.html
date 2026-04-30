@@ -125,15 +125,14 @@
       </div>
 
       <div class="sidebar-section">Operação</div>
-      <div class="sidebar-item sidebar-item-soon">
+      <div id="nav-dashboard" class="sidebar-item" onclick="mostrarAba('dashboard')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="13" y="3" width="8" height="6" rx="1.5"/>
           <rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="15" width="8" height="6" rx="1.5"/>
         </svg>
         <span>Dashboard</span>
-        <span class="sidebar-soon-badge">em breve</span>
       </div>
-      <div id="nav-paradas" class="sidebar-item active">
+      <div id="nav-paradas" class="sidebar-item">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3 2 20h20z"/><path d="M12 10v5M12 18v.01"/>
         </svg>
@@ -470,6 +469,91 @@
       </div>
     </main>
 
+    <!-- ABA DASHBOARD -->
+    <main id="aba-dashboard" class="bw-main hidden">
+
+      <!-- SECTOR SELECTOR -->
+      <div id="dash-sectors">
+        <div class="bw-topbar">
+          <div>
+            <div class="bw-page-title">Dashboard</div>
+            <div class="bw-page-sub">Selecione o setor para visualizar o chão de fábrica — Planta 04</div>
+          </div>
+        </div>
+        <div class="sector-grid">
+          <div class="sector-card" onclick="abrirSetor('pc')">
+            <div class="sector-card-header">
+              <div class="sector-label">PC</div>
+              <div class="sector-badge hidden" id="sector-pc-badge">0</div>
+            </div>
+            <div class="sector-name">Pass Car</div>
+            <div class="sector-stats">
+              <div class="sector-stat">
+                <span class="sector-stat-val" style="color:var(--success)" id="sector-pc-op">—</span>
+                <span class="sector-stat-label">Operando</span>
+              </div>
+              <div class="sector-stat">
+                <span class="sector-stat-val" style="color:var(--danger)" id="sector-pc-par">—</span>
+                <span class="sector-stat-label">Paradas</span>
+              </div>
+              <div class="sector-stat">
+                <span class="sector-stat-val" style="color:var(--warning)" id="sector-pc-pend">—</span>
+                <span class="sector-stat-label">Não justif.</span>
+              </div>
+            </div>
+            <div class="sector-arrow">→</div>
+          </div>
+          <div class="sector-card sector-card-inactive">
+            <div class="sector-card-header">
+              <div class="sector-label">CV</div>
+            </div>
+            <div class="sector-name">Commercial Vehicles</div>
+            <span class="sidebar-soon-badge" style="margin-top:8px">em breve</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLOOR MAP VIEW -->
+      <div id="dash-map" class="hidden">
+        <div class="bw-topbar">
+          <div style="display:flex;align-items:center;gap:12px">
+            <button class="btn btn-ghost btn-sm" onclick="voltarSetores()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              Setores
+            </button>
+            <div>
+              <div class="bw-page-title" id="dash-map-title">—</div>
+              <div class="bw-page-sub" id="dash-map-sub">Planta 04</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:20px">
+            <div class="dm-kpis">
+              <div class="dm-kpi"><span class="dm-kpi-val" style="color:var(--success)" id="dm-operando">—</span><span class="dm-kpi-label">Operando</span></div>
+              <div class="dm-kpi"><span class="dm-kpi-val" style="color:var(--danger)" id="dm-paradas">—</span><span class="dm-kpi-label">Paradas</span></div>
+              <div class="dm-kpi"><span class="dm-kpi-val" style="color:var(--warning)" id="dm-pendentes">—</span><span class="dm-kpi-label">Não justif.</span></div>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btn-ocultar-fila" onclick="toggleFilaPanel()">Ocultar fila</button>
+          </div>
+        </div>
+        <div class="dm-body">
+          <div id="dm-floor" class="dm-floor"></div>
+          <div id="dm-fila" class="dm-fila">
+            <div class="dm-fila-header">
+              <span class="dm-fila-dot"></span>
+              <span class="dm-fila-title">Fila ativa</span>
+              <span id="dm-fila-count" class="dm-fila-count">0 chamados</span>
+            </div>
+            <div id="dm-fila-list" class="dm-fila-list"></div>
+            <div class="dm-fila-footer">
+              <span>MTTR TURNO</span>
+              <span id="dm-mttr" style="color:var(--accent);font-weight:600">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
   </div><!-- /tela-dashboard -->
 
   <!-- MODAL JUSTIFICATIVA — drawer ousado -->
@@ -552,172 +636,6 @@
       </form>
     </div>
   </div>
-
-  <script src="/static/app.js"></script>
-</body>
-</html>
-
-          <div class="drawer-section">
-            <div class="drawer-section-title">Janela da parada</div>
-            <div id="drawer-timeline" class="drawer-timeline"></div>
-          </div>
-
-          <div class="drawer-section">
-            <div class="drawer-section-title">Categoria</div>
-            <div id="cat-grid" class="cat-grid"></div>
-            <p id="just-cat-erro" class="erro hidden" style="margin-top:6px">Selecione uma categoria</p>
-          </div>
-
-          <div class="field">
-            <label class="field-label">Responsável</label>
-            <input type="text" id="just-responsavel" class="input" placeholder="Nome do técnico" required />
-          </div>
-
-          <div class="field">
-            <label class="field-label">Descrição</label>
-            <textarea id="just-descricao" class="textarea" rows="3" placeholder="Detalhes adicionais..." maxlength="500"></textarea>
-            <div class="char-counter"><span id="just-char-count">0</span> / 500</div>
-          </div>
-
-          <p id="just-erro" class="erro hidden"></p>
-        </form>
-      </div>
-      <div class="drawer-foot">
-        <div class="drawer-foot-hint">ℹ Será registrado em seu nome</div>
-        <div style="display:flex;gap:10px">
-          <button type="button" id="btn-cancelar" class="btn btn-ghost">Cancelar</button>
-          <button type="submit" form="form-just" class="btn btn-primary drawer-submit">Confirmar ›</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL USUÁRIO -->
-  <div id="modal-usuario" class="modal-overlay hidden">
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3 id="modal-usuario-titulo">Novo Usuário</h3>
-        <button id="modal-usuario-fechar" class="btn-fechar">✕</button>
-      </div>
-      <form id="form-usuario">
-        <input type="hidden" id="usuario-id" />
-        <label>Nome completo
-          <input type="text" id="usuario-nome" required />
-        </label>
-        <label>Login
-          <input type="text" id="usuario-login" required />
-        </label>
-        <label>Senha
-          <input type="password" id="usuario-senha" placeholder="Deixe vazio para não alterar" />
-        </label>
-        <label>Perfil
-          <select id="usuario-perfil" required>
-            <option value="tecnico_mep">Técnico MEP</option>
-            <option value="tecnico_manutencao">Técnico Manutenção</option>
-            <option value="supervisor">Supervisor</option>
-          </select>
-        </label>
-        <div class="modal-actions">
-          <button type="button" id="btn-usuario-cancelar" class="btn btn-ghost">Cancelar</button>
-          <button type="submit" class="btn btn-primary">Salvar</button>
-        </div>
-        <p id="usuario-erro" class="erro hidden"></p>
-      </form>
-    </div>
-      <!-- ABA CONFIGURAÇÕES (supervisor only) -->
-      <main id="aba-configuracoes" class="bw-main hidden">
-        <div class="bw-topbar">
-          <div>
-            <div class="u-eyebrow">▸ Administração</div>
-            <div class="bw-page-title">Configurações</div>
-          </div>
-        </div>
-
-        <div class="cfg-grid">
-
-          <!-- PERFIL -->
-          <div class="cfg-card">
-            <div class="cfg-card-title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg>
-              Perfil
-            </div>
-            <form id="form-perfil" class="cfg-form">
-              <div class="field">
-                <label class="field-label">Nome exibido</label>
-                <input type="text" id="cfg-nome" class="input" placeholder="Seu nome completo" />
-              </div>
-              <div class="cfg-divider"></div>
-              <div class="field">
-                <label class="field-label">Senha atual</label>
-                <input type="password" id="cfg-senha-atual" class="input" placeholder="••••••••" autocomplete="current-password" />
-              </div>
-              <div class="field">
-                <label class="field-label">Nova senha</label>
-                <input type="password" id="cfg-senha-nova" class="input" placeholder="Mínimo 4 caracteres" autocomplete="new-password" />
-              </div>
-              <div class="field">
-                <label class="field-label">Confirmar nova senha</label>
-                <input type="password" id="cfg-senha-confirmar" class="input" placeholder="Repita a nova senha" autocomplete="new-password" />
-              </div>
-              <p id="cfg-perfil-erro" class="erro hidden"></p>
-              <p id="cfg-perfil-ok" class="cfg-ok hidden">Perfil atualizado com sucesso.</p>
-              <div class="cfg-actions">
-                <button type="submit" class="btn btn-primary">Salvar perfil</button>
-              </div>
-            </form>
-          </div>
-
-          <!-- THRESHOLDS -->
-          <div class="cfg-card">
-            <div class="cfg-card-title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-              Thresholds
-            </div>
-            <form id="form-thresholds" class="cfg-form">
-              <div class="field">
-                <label class="field-label">Minutos para parada urgente</label>
-                <div class="cfg-threshold-row">
-                  <input type="range" id="cfg-urgente-range" min="5" max="120" step="5" value="30" class="cfg-range" />
-                  <div class="cfg-threshold-val"><span id="cfg-urgente-val">30</span> min</div>
-                </div>
-                <div style="font-size:11px;color:var(--text-muted);margin-top:6px">
-                  Paradas não justificadas acima desse tempo aparecem em destaque vermelho.
-                </div>
-              </div>
-              <p id="cfg-thresh-ok" class="cfg-ok hidden">Configuração salva.</p>
-              <div class="cfg-actions">
-                <button type="submit" class="btn btn-primary">Salvar</button>
-              </div>
-            </form>
-          </div>
-
-          <!-- MÁQUINAS -->
-          <div class="cfg-card cfg-card-full">
-            <div class="cfg-card-title" style="justify-content:space-between">
-              <div style="display:flex;align-items:center;gap:8px">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V10l5 3V10l5 3V8l8 4v9z"/><path d="M7 17h2M11 17h2M15 17h2"/></svg>
-                Máquinas
-              </div>
-              <button id="cfg-btn-add-maquina" class="btn btn-ghost btn-sm">+ Adicionar</button>
-            </div>
-            <div id="cfg-maquinas-form-wrap" class="cfg-maq-add hidden">
-              <div class="cfg-maq-add-row">
-                <input type="text" id="cfg-maq-inv" class="input" placeholder="InventoryNumber" style="width:160px" />
-                <input type="text" id="cfg-maq-nome" class="input" placeholder="Nome exibido" style="flex:1" />
-                <button id="cfg-btn-maq-salvar" class="btn btn-primary btn-sm">Salvar</button>
-                <button id="cfg-btn-maq-cancelar" class="btn btn-ghost btn-sm">Cancelar</button>
-              </div>
-              <p id="cfg-maq-erro" class="erro hidden"></p>
-            </div>
-            <div id="cfg-lista-maquinas" class="cfg-maq-list"></div>
-          </div>
-
-        </div>
-      </main>
-
-  </div><!-- /tela-dashboard -->
-
-  <!-- modal-detalhes removido: substituído por #aba-detalhes full-page -->
 
   <script src="/static/app.js"></script>
 </body>
