@@ -503,12 +503,27 @@
             </div>
             <div class="sector-arrow">→</div>
           </div>
-          <div class="sector-card sector-card-inactive">
+          <div class="sector-card" onclick="abrirSetor('cv')">
             <div class="sector-card-header">
               <div class="sector-label">CV</div>
+              <div class="sector-badge hidden" id="sector-cv-badge">0</div>
             </div>
             <div class="sector-name">Commercial Vehicles</div>
-            <span class="sidebar-soon-badge" style="margin-top:8px">em breve</span>
+            <div class="sector-stats">
+              <div class="sector-stat">
+                <span class="sector-stat-val" style="color:var(--success)" id="sector-cv-op">—</span>
+                <span class="sector-stat-label">Operando</span>
+              </div>
+              <div class="sector-stat">
+                <span class="sector-stat-val" style="color:var(--danger)" id="sector-cv-par">—</span>
+                <span class="sector-stat-label">Paradas</span>
+              </div>
+              <div class="sector-stat">
+                <span class="sector-stat-val" style="color:var(--warning)" id="sector-cv-pend">—</span>
+                <span class="sector-stat-label">Não justif.</span>
+              </div>
+            </div>
+            <div class="sector-arrow">→</div>
           </div>
         </div>
       </div>

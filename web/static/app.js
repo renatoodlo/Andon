@@ -906,6 +906,23 @@ const PLANTA = {
         ]
       }
     ]
+  },
+  cv: {
+    label: 'Commercial Vehicles',
+    cells: [
+      {
+        id: 'CM09',
+        cols: 2,
+        machines: [
+          { inv: '7377', label: 'OP10',      col: 1, row: 1 },
+          { inv: '6523', label: 'OP20',      col: 2, row: 1 },
+          { inv: '6800', label: 'OP30 AB',   col: 1, row: 2 },
+          { inv: '8863', label: 'OP30 CD',   col: 2, row: 2 },
+          { inv: '6518', label: 'RA06',      col: 1, row: 3 },
+          { inv: '6810', label: 'LIB.\nLinha', col: 2, row: 3 },
+        ]
+      }
+    ]
   }
 };
 
@@ -925,17 +942,28 @@ async function atualizarSectorCards() {
     MAPA_STATUS = await r.json();
     const maquinas = MAPA_STATUS.maquinas || {};
 
-    const pc_invs = PLANTA.pc.cells.flatMap(c => c.machines.filter(m => m.inv).map(m => m.inv));
-    const pc_par  = pc_invs.filter(inv => maquinas[inv]?.status === 'parada');
-    const pc_pend = pc_par.filter(inv => maquinas[inv]?.just === 'NAO_JUSTIFICADO');
+    function calcStats(setor) {
+      const invs = PLANTA[setor].cells.flatMap(c => c.machines.filter(m => m.inv).map(m => m.inv));
+      const par  = invs.filter(inv => maquinas[inv]?.status === 'parada');
+      const pend = par.filter(inv => maquinas[inv]?.just === 'NAO_JUSTIFICADO');
+      return { invs, par, pend };
+    }
 
-    $('sector-pc-op').textContent  = pc_invs.length - pc_par.length;
-    $('sector-pc-par').textContent = pc_par.length;
-    $('sector-pc-pend').textContent = pc_pend.length;
+    const pc = calcStats('pc');
+    $('sector-pc-op').textContent   = pc.invs.length - pc.par.length;
+    $('sector-pc-par').textContent  = pc.par.length;
+    $('sector-pc-pend').textContent = pc.pend.length;
+    const pcBadge = $('sector-pc-badge');
+    pcBadge.textContent = pc.par.length;
+    pcBadge.classList.toggle('hidden', pc.par.length === 0);
 
-    const badge = $('sector-pc-badge');
-    badge.textContent = pc_par.length;
-    badge.classList.toggle('hidden', pc_par.length === 0);
+    const cv = calcStats('cv');
+    $('sector-cv-op').textContent   = cv.invs.length - cv.par.length;
+    $('sector-cv-par').textContent  = cv.par.length;
+    $('sector-cv-pend').textContent = cv.pend.length;
+    const cvBadge = $('sector-cv-badge');
+    cvBadge.textContent = cv.par.length;
+    cvBadge.classList.toggle('hidden', cv.par.length === 0);
   } catch (_) {}
 }
 
