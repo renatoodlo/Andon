@@ -37,6 +37,11 @@ def listar_paradas(
         for r in rows:
             d = dict(r)
             d["nome_maquina"] = nome_maquina(d["inventory_number"], conn)
+            just = conn.execute(
+                "SELECT categoria, responsavel, descricao FROM justificativas WHERE parada_id = ? ORDER BY criado_em LIMIT 1",
+                (d["id"],)
+            ).fetchone()
+            d["justificativas"] = [dict(just)] if just else []
             result.append(d)
     return result
 
