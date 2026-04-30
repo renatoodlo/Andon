@@ -875,6 +875,21 @@ const PLANTA = {
           { inv: '7876', label: 'OP50',       col: 1, row: 4 },
           { inv: '7978', label: 'OP70',       col: 2, row: 4 },
         ]
+      },
+      {
+        id: 'CM15',
+        cols: 3,
+        machines: [
+          { inv: '6400', label: 'OP10AB',     col: 1, row: 1 },
+          { inv: '6401', label: 'OP10CD',     col: 2, row: 1 },
+          { inv: '5420', label: 'OP20',       col: 3, row: 1 },
+          { inv: '6403', label: 'OP30',       col: 1, row: 2, colSpan: 3 },
+          { inv: '6408', label: 'OP40A',      col: 1, row: 3 },
+          { inv: '6405', label: 'OP40B',      col: 2, row: 3 },
+          { inv: null,   label: 'BL',         col: 3, row: 3, disabled: true },
+          { inv: '6406', label: 'OP50',       col: 1, row: 4 },
+          { inv: '7975', label: 'OP70',       col: 2, row: 4 },
+        ]
       }
     ]
   }
