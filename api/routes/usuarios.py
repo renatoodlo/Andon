@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from passlib.hash import bcrypt
 from api.auth import get_usuario_atual, require_perfil
-from database.models import get_conn
+from database.models import get_conn, VALID_PERFIS
 
 router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
@@ -33,7 +33,7 @@ def listar_usuarios(usuario=Depends(require_perfil("supervisor"))):
 
 @router.post("")
 def criar_usuario(body: UsuarioCreate, usuario=Depends(require_perfil("supervisor"))):
-    if body.perfil not in ("operador", "tecnico", "supervisor"):
+    if body.perfil not in VALID_PERFIS:
         raise HTTPException(status_code=400, detail="Perfil inválido")
     senha_hash = bcrypt.hash(body.senha)
     try:

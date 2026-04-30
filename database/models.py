@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nome        TEXT    NOT NULL,
     login       TEXT    NOT NULL UNIQUE,
     senha_hash  TEXT    NOT NULL,
-    perfil      TEXT    NOT NULL CHECK(perfil IN ('operador', 'tecnico', 'supervisor')),
+    perfil      TEXT    NOT NULL,
     ativo       INTEGER NOT NULL DEFAULT 1
 );
 
@@ -47,6 +47,8 @@ CREATE TABLE IF NOT EXISTS configuracoes (
 );
 """
 
+VALID_PERFIS = ('tecnico_mep', 'tecnico_manutencao', 'supervisor')
+
 
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
@@ -58,6 +60,11 @@ def get_conn():
 def init_db():
     conn = get_conn()
     conn.executescript(SCHEMA)
+    conn.commit()
+
+    # Migra roles antigas para os novos valores
+    conn.execute("UPDATE usuarios SET perfil = 'tecnico_mep'       WHERE perfil IN ('tecnico', 'operador')")
+    conn.execute("UPDATE usuarios SET perfil = 'tecnico_manutencao' WHERE perfil = 'tecnico_manutencao'")
     conn.commit()
 
     # Cria supervisor padrão se o banco estiver vazio

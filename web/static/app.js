@@ -77,7 +77,8 @@ function mostrarDashboard() {
 
   // Preenche info do usuário na sidebar
   $('user-name').textContent = USUARIO;
-  $('user-role').textContent = PERFIL;
+  const PERFIL_LABEL = { supervisor: 'Supervisor', tecnico_mep: 'Técnico MEP', tecnico_manutencao: 'Técnico Manutenção' };
+  $('user-role').textContent = PERFIL_LABEL[PERFIL] || PERFIL;
   $('user-avatar').textContent = iniciais(USUARIO);
 
   if (PERFIL === 'supervisor') {
@@ -94,6 +95,10 @@ function mostrarDashboard() {
 // ── NAVEGAÇÃO ABAS ─────────────────────────────────────────────────────────
 
 function mostrarAba(aba) {
+  // protege abas restritas a supervisor
+  if ((aba === 'usuarios' || aba === 'configuracoes') && PERFIL !== 'supervisor') {
+    aba = 'paradas';
+  }
   $('aba-paradas').classList.toggle('hidden', aba !== 'paradas');
   $('aba-usuarios').classList.toggle('hidden', aba !== 'usuarios');
   $('aba-configuracoes').classList.toggle('hidden', aba !== 'configuracoes');
@@ -517,12 +522,12 @@ function renderUsuarios(usuarios) {
   // KPI counts
   const total      = usuarios.length;
   const supervisor = usuarios.filter(u => u.perfil === 'supervisor').length;
-  const tecnico    = usuarios.filter(u => u.perfil === 'tecnico').length;
-  const operador   = usuarios.filter(u => u.perfil === 'operador').length;
-  const kpiTotal = $('kpi-total'); if (kpiTotal) kpiTotal.textContent = total;
-  const kpiSup   = $('kpi-supervisor'); if (kpiSup) kpiSup.textContent = supervisor;
-  const kpiTec   = $('kpi-tecnico'); if (kpiTec) kpiTec.textContent = tecnico;
-  const kpiOp    = $('kpi-operador'); if (kpiOp) kpiOp.textContent = operador;
+  const tecMep     = usuarios.filter(u => u.perfil === 'tecnico_mep').length;
+  const tecMan     = usuarios.filter(u => u.perfil === 'tecnico_manutencao').length;
+  const kpiTotal = $('kpi-total');             if (kpiTotal) kpiTotal.textContent = total;
+  const kpiSup   = $('kpi-supervisor');        if (kpiSup)   kpiSup.textContent   = supervisor;
+  const kpiTecM  = $('kpi-tecnico-mep');       if (kpiTecM)  kpiTecM.textContent  = tecMep;
+  const kpiTecN  = $('kpi-tecnico-manutencao'); if (kpiTecN)  kpiTecN.textContent  = tecMan;
 
   _aplicarFiltros();
 }
@@ -545,7 +550,7 @@ function _renderCards(lista) {
   }
   grid.innerHTML = lista.map(u => {
     const ini = iniciais(u.nome);
-    const perfilLabel = u.perfil.charAt(0).toUpperCase() + u.perfil.slice(1);
+    const perfilLabel = { supervisor: 'Supervisor', tecnico_mep: 'Téc. MEP', tecnico_manutencao: 'Téc. Manutenção' }[u.perfil] || u.perfil;
     const badgeClass = u.ativo ? 'badge-success' : 'badge-danger';
     const badgeLabel = u.ativo ? 'Ativo' : 'Inativo';
     return `
@@ -587,7 +592,7 @@ if (_uBusca) _uBusca.addEventListener('input', _aplicarFiltros);
 
 $('btn-novo-usuario').addEventListener('click', () => abrirModalUsuario());
 
-function abrirModalUsuario(id = null, nome = '', login = '', perfil = 'operador') {
+function abrirModalUsuario(id = null, nome = '', login = '', perfil = 'tecnico_mep') {
   $('usuario-id').value     = id || '';
   $('usuario-nome').value   = nome;
   $('usuario-login').value  = login;

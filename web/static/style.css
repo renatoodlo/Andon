@@ -1036,9 +1036,9 @@ button:disabled { opacity: .5; cursor: default; pointer-events: none; }
   flex-shrink: 0;
 }
 
-.u-card-avatar.supervisor { background: linear-gradient(135deg, var(--accent), var(--bw-blue)); }
-.u-card-avatar.tecnico    { background: linear-gradient(135deg, var(--warning), #b8541a); }
-.u-card-avatar.operador   { background: linear-gradient(135deg, var(--bw-ocean-ultra), #8b00cc); color: #fff; }
+.u-card-avatar.supervisor          { background: linear-gradient(135deg, var(--accent), var(--bw-blue)); }
+.u-card-avatar.tecnico_mep         { background: linear-gradient(135deg, var(--warning), #b8541a); }
+.u-card-avatar.tecnico_manutencao  { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
 
 .u-card-info { flex: 1; min-width: 0; }
 
