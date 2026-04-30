@@ -56,6 +56,18 @@ $('form-login').addEventListener('submit', async e => {
   }
 });
 
+// ── SIDEBAR MOBILE ─────────────────────────────────────────────────────────
+
+function abrirSidebar() {
+  $('bw-sidebar').classList.add('sidebar-open');
+  $('sidebar-backdrop').classList.add('sidebar-open');
+}
+
+function fecharSidebar() {
+  $('bw-sidebar').classList.remove('sidebar-open');
+  $('sidebar-backdrop').classList.remove('sidebar-open');
+}
+
 // ── LOGOUT ─────────────────────────────────────────────────────────────────
 
 $('btn-logout').addEventListener('click', () => {
@@ -114,6 +126,7 @@ function mostrarAba(aba) {
   if (aba === 'configuracoes') carregarConfiguracoes();
 
   if (aba !== 'dashboard') pararPollingMapa();
+  fecharSidebar();
 }
 
 $('nav-paradas').addEventListener('click',       () => mostrarAba('paradas'));

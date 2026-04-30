@@ -2086,3 +2086,186 @@ button:disabled { opacity: .5; cursor: default; pointer-events: none; }
   letter-spacing: .05em;
   flex-shrink: 0;
 }
+
+/* ── HAMBURGER BUTTON ────────────────────────────────────────────────────── */
+
+.btn-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 198;
+}
+
+.btn-hamburger:hover { background: var(--surface-2); }
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 199;
+}
+
+/* ── MOBILE ≤ 768px ──────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+
+  /* Shell: sidebar sai do grid */
+  .bw-shell {
+    grid-template-columns: 1fr;
+  }
+
+  /* Sidebar: overlay deslizante */
+  .bw-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 240px;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    box-shadow: none;
+  }
+
+  .bw-sidebar.sidebar-open {
+    transform: translateX(0);
+    box-shadow: 4px 0 32px rgba(0,0,0,.5);
+  }
+
+  .sidebar-backdrop.sidebar-open {
+    display: block;
+  }
+
+  /* Hamburger visível */
+  .btn-hamburger {
+    display: flex;
+  }
+
+  /* Topbar com espaço para o hamburger fixo */
+  .bw-topbar {
+    padding: 10px 14px 10px 64px;
+    gap: 8px;
+    min-height: 52px;
+  }
+
+  .bw-page-title { font-size: 16px; }
+  .bw-page-sub   { font-size: 11px; }
+
+  /* KPIs do mapa: scroll horizontal */
+  .dm-kpis {
+    gap: 14px;
+    overflow-x: auto;
+  }
+
+  .dm-kpi-val   { font-size: 18px; }
+  .dm-kpi-label { font-size: 9px; }
+
+  /* Botão ocultar fila: some no mobile */
+  #btn-ocultar-fila { display: none; }
+
+  /* Floor map: scroll horizontal */
+  .dm-body {
+    grid-template-columns: 1fr;
+    height: calc(100vh - 52px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dm-floor {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 12px;
+    padding: 14px;
+    align-items: flex-start;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .fm-cell {
+    min-width: 200px;
+    flex-shrink: 0;
+  }
+
+  .fm-machine {
+    min-height: 72px;
+  }
+
+  .fm-machine-label { font-size: 12px; }
+
+  /* Fila: barra fixa no rodapé */
+  .dm-fila {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    max-height: 38vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dm-fila-list {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Sector cards: coluna única */
+  .sector-grid {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .sector-name  { font-size: 20px; }
+  .sector-stat-val { font-size: 20px; }
+
+  /* Paradas grid */
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* KPI bar usuários */
+  .u-kpi-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Cfg grid */
+  .cfg-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cfg-card-full { grid-column: 1 !important; }
+
+  /* Detalhes */
+  .det-body { grid-template-columns: 1fr; }
+  .det-hero-top { flex-direction: column; gap: 12px; }
+
+  /* Drawer */
+  .drawer { width: 100%; }
+  .drawer-overlay { align-items: flex-end; }
+}
+
+/* ── TABLET 769–1024px ───────────────────────────────────────────────────── */
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sector-grid {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 20px;
+  }
+
+  .fm-cell { min-width: 180px; }
+}

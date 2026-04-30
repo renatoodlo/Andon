@@ -114,8 +114,18 @@
   <!-- DASHBOARD -->
   <div id="tela-dashboard" class="bw-shell hidden">
 
+    <!-- Backdrop mobile -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="fecharSidebar()"></div>
+
+    <!-- Hamburger fixo (mobile only) -->
+    <button class="btn-hamburger" id="btn-hamburger" onclick="abrirSidebar()" aria-label="Menu">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+
     <!-- SIDEBAR -->
-    <aside class="bw-sidebar">
+    <aside class="bw-sidebar" id="bw-sidebar">
       <div class="sidebar-brand">
         <div class="sidebar-brand-mark">B</div>
         <div class="sidebar-brand-text">
