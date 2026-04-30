@@ -1944,19 +1944,25 @@ button:disabled { opacity: .5; cursor: default; pointer-events: none; }
 }
 
 .fm-parada {
-  background: rgba(255,77,94,.15);
-  border: 1px solid rgba(255,77,94,.35);
-  color: var(--danger);
-}
-
-.fm-urgente {
   background: rgba(245,165,36,.2);
   border: 1px solid rgba(245,165,36,.45);
   color: var(--warning);
-  animation: fm-pulse 2s ease-in-out infinite;
+  animation: fm-pulse-yellow 2s ease-in-out infinite;
 }
 
-@keyframes fm-pulse {
+.fm-urgente {
+  background: rgba(255,77,94,.2);
+  border: 1px solid rgba(255,77,94,.5);
+  color: var(--danger);
+  animation: fm-pulse-red 1.4s ease-in-out infinite;
+}
+
+@keyframes fm-pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,94,.45); }
+  50%       { box-shadow: 0 0 0 7px rgba(255,77,94,0); }
+}
+
+@keyframes fm-pulse-yellow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(245,165,36,.35); }
   50%       { box-shadow: 0 0 0 6px rgba(245,165,36,0); }
 }

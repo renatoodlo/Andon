@@ -914,12 +914,44 @@ const PLANTA = {
         id: 'CM09',
         cols: 2,
         machines: [
-          { inv: '7377', label: 'OP10',      col: 1, row: 1 },
-          { inv: '6523', label: 'OP20',      col: 2, row: 1 },
-          { inv: '6800', label: 'OP30 AB',   col: 1, row: 2 },
-          { inv: '8863', label: 'OP30 CD',   col: 2, row: 2 },
-          { inv: '6518', label: 'RA06',      col: 1, row: 3 },
+          { inv: '7377', label: 'OP10',        col: 1, row: 1 },
+          { inv: '6523', label: 'OP20',        col: 2, row: 1 },
+          { inv: '6800', label: 'OP30 AB',     col: 1, row: 2 },
+          { inv: '8863', label: 'OP30 CD',     col: 2, row: 2 },
+          { inv: '6518', label: 'RA06',        col: 1, row: 3 },
           { inv: '6810', label: 'LIB.\nLinha', col: 2, row: 3 },
+        ]
+      },
+      {
+        id: 'CM03',
+        cols: 2,
+        machines: [
+          { inv: '7378', label: 'OP10',    col: 1, row: 1 },
+          { inv: '6521', label: 'OP20',    col: 2, row: 1 },
+          { inv: '8846', label: 'OP30 AB', col: 1, row: 2 },
+          { inv: '8858', label: 'OP30 CD', col: 2, row: 2 },
+          { inv: '7681', label: 'RA11',    col: 1, row: 3 },
+        ]
+      },
+      {
+        id: 'CM04',
+        cols: 2,
+        machines: [
+          { inv: '7375',  label: 'OP10',    col: 1, row: 1 },
+          { inv: '6519',  label: 'OP20',    col: 2, row: 1 },
+          { inv: '8791',  label: 'OP30 AB', col: 1, row: 2 },
+          { inv: '10302', label: 'OP30 CD', col: 2, row: 2 },
+          { inv: '7680',  label: 'RA15',    col: 1, row: 3 },
+        ]
+      },
+      {
+        id: 'CM10',
+        cols: 2,
+        machines: [
+          { inv: '7345', label: 'OP10',  col: 1, row: 1 },
+          { inv: '7494', label: 'OP30',  col: 2, row: 1 },
+          { inv: '6520', label: 'RA09',  col: 1, row: 2 },
+          { inv: '3803', label: 'OP40',  col: 2, row: 2 },
         ]
       }
     ]
