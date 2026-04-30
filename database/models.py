@@ -62,10 +62,41 @@ def init_db():
     conn.executescript(SCHEMA)
     conn.commit()
 
-    # Migra roles antigas para os novos valores
-    conn.execute("UPDATE usuarios SET perfil = 'tecnico_mep'       WHERE perfil IN ('tecnico', 'operador')")
-    conn.execute("UPDATE usuarios SET perfil = 'tecnico_manutencao' WHERE perfil = 'tecnico_manutencao'")
-    conn.commit()
+    # Migra tabela usuarios se ainda tiver o CHECK constraint antigo
+    schema_row = conn.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='usuarios'"
+    ).fetchone()
+    if schema_row and ("'operador'" in schema_row[0] or "'tecnico'" in schema_row[0]):
+        print("🔄 Migrando tabela usuarios para novos perfis...")
+        conn.executescript("""
+            PRAGMA foreign_keys = OFF;
+            BEGIN;
+            ALTER TABLE usuarios RENAME TO usuarios_old;
+            CREATE TABLE usuarios (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome        TEXT    NOT NULL,
+                login       TEXT    NOT NULL UNIQUE,
+                senha_hash  TEXT    NOT NULL,
+                perfil      TEXT    NOT NULL,
+                ativo       INTEGER NOT NULL DEFAULT 1
+            );
+            INSERT INTO usuarios SELECT id, nome, login, senha_hash,
+                CASE perfil
+                    WHEN 'operador' THEN 'tecnico_mep'
+                    WHEN 'tecnico'  THEN 'tecnico_mep'
+                    ELSE perfil
+                END,
+                ativo
+            FROM usuarios_old;
+            DROP TABLE usuarios_old;
+            COMMIT;
+            PRAGMA foreign_keys = ON;
+        """)
+        print("✅ Migração concluída")
+    else:
+        # Banco novo ou já migrado — apenas converte se ainda restar algum
+        conn.execute("UPDATE usuarios SET perfil='tecnico_mep' WHERE perfil IN ('tecnico','operador')")
+        conn.commit()
 
     # Cria supervisor padrão se o banco estiver vazio
     cur = conn.execute("SELECT COUNT(*) FROM usuarios")
