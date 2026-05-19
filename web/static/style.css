@@ -1967,6 +1967,129 @@ button:disabled { opacity: .5; cursor: default; pointer-events: none; }
   50%       { box-shadow: 0 0 0 6px rgba(245,165,36,0); }
 }
 
+.fm-atendimento {
+  background: rgba(245,165,36,.15);
+  border: 1px solid rgba(245,165,36,.4);
+  color: var(--warning);
+  animation: fm-pulse-yellow 1.8s ease-in-out infinite;
+}
+
+.fm-assumir-btn {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 2px 0;
+  font-size: .6rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  background: rgba(255,77,94,.25);
+  border: 1px solid rgba(255,77,94,.5);
+  border-radius: 3px;
+  color: var(--danger);
+  cursor: pointer;
+  transition: background .15s;
+}
+.fm-assumir-btn:hover { background: rgba(255,77,94,.45); }
+
+.fm-atend-label {
+  font-size: .6rem;
+  opacity: .85;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── MINHA EQUIPE ─────────────────────────────────────────────────────────── */
+
+.equipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  padding: 20px 24px;
+}
+
+.equipe-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color .2s;
+}
+.equipe-card:hover { border-color: rgba(66,228,217,.25); }
+
+.equipe-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.equipe-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(66,228,217,.15);
+  border: 1px solid rgba(66,228,217,.3);
+  color: var(--accent);
+  font-size: .95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.equipe-nome { font-size: .9rem; font-weight: 600; color: var(--text-primary); }
+.equipe-perfil-label { font-size: .72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+
+.equipe-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .78rem;
+  padding: 5px 10px;
+  border-radius: 20px;
+}
+.equipe-status.livre        { background: rgba(34,185,117,.1);  border: 1px solid rgba(34,185,117,.25);  color: var(--success); }
+.equipe-status.em-atendimento { background: rgba(245,165,36,.12); border: 1px solid rgba(245,165,36,.3); color: var(--warning); }
+
+.equipe-status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.livre .equipe-status-dot           { background: var(--success); }
+.em-atendimento .equipe-status-dot  { background: var(--warning); animation: fila-blink 1.6s ease-in-out infinite; }
+
+.equipe-maquina-info { font-size: .75rem; color: var(--text-muted); padding: 4px 8px; background: rgba(255,255,255,.03); border-radius: 6px; }
+
+.btn-suporte {
+  margin-top: auto;
+  padding: 7px 12px;
+  font-size: .78rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid rgba(66,228,217,.35);
+  background: rgba(66,228,217,.08);
+  color: var(--accent);
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  text-align: center;
+}
+.btn-suporte:hover { background: rgba(66,228,217,.18); border-color: var(--accent); }
+
+.equipe-vazio { grid-column: 1/-1; text-align: center; padding: 48px 0; color: var(--text-muted); font-size: .9rem; }
+
+#modal-suporte .modal-box { max-width: 400px; }
+.suporte-destino { font-weight: 700; color: var(--accent); }
+
+.cfg-escalamento-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+@media (max-width: 768px) {
+  .equipe-grid { grid-template-columns: 1fr; padding: 14px 16px; }
+  .cfg-escalamento-grid { grid-template-columns: 1fr; }
+}
+
 .fm-machine-label {
   font-family: var(--font-display);
   font-size: 11px;

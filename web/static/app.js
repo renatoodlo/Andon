@@ -75,6 +75,8 @@ $('btn-logout').addEventListener('click', () => {
   TOKEN = PERFIL = USUARIO = '';
   localStorage.clear();
   clearInterval(REFRESH_TIMER);
+  pararPollingMapa();
+  pararPollingEquipe();
   $('tela-dashboard').classList.add('hidden');
   $('tela-login').classList.remove('hidden');
   $('login-user').value = '';
@@ -111,25 +113,30 @@ function mostrarAba(aba) {
 
   $('aba-dashboard').classList.toggle('hidden', aba !== 'dashboard');
   $('aba-paradas').classList.toggle('hidden', aba !== 'paradas');
+  $('aba-equipe').classList.toggle('hidden', aba !== 'equipe');
   $('aba-usuarios').classList.toggle('hidden', aba !== 'usuarios');
   $('aba-configuracoes').classList.toggle('hidden', aba !== 'configuracoes');
   $('aba-detalhes').classList.add('hidden');
 
   $('nav-dashboard').classList.toggle('active', aba === 'dashboard');
   $('nav-paradas').classList.toggle('active', aba === 'paradas');
+  $('nav-equipe').classList.toggle('active', aba === 'equipe');
   $('nav-usuarios').classList.toggle('active', aba === 'usuarios');
   $('nav-configuracoes').classList.toggle('active', aba === 'configuracoes');
 
   if (aba === 'dashboard')     carregarDashboard();
   if (aba === 'paradas')       carregarParadas();
+  if (aba === 'equipe')        carregarEquipe();
   if (aba === 'usuarios')      carregarUsuarios();
   if (aba === 'configuracoes') carregarConfiguracoes();
 
   if (aba !== 'dashboard') pararPollingMapa();
+  if (aba !== 'equipe')    pararPollingEquipe();
   fecharSidebar();
 }
 
 $('nav-paradas').addEventListener('click',       () => mostrarAba('paradas'));
+$('nav-equipe').addEventListener('click',        () => mostrarAba('equipe'));
 $('nav-usuarios').addEventListener('click',      () => mostrarAba('usuarios'));
 $('nav-configuracoes').addEventListener('click', () => mostrarAba('configuracoes'));
 
@@ -213,19 +220,35 @@ function renderParadas(paradas) {
   document.querySelectorAll('.btn-detalhes').forEach(btn => {
     btn.addEventListener('click', () => abrirDetalhes(Number(btn.dataset.id)));
   });
+  document.querySelectorAll('.btn-assumir-card').forEach(btn => {
+    btn.addEventListener('click', () => assumirAtendimento(Number(btn.dataset.id)));
+  });
+}
+
+function cardAtendimentoHTML(p) {
+  const atend = p.status_atend || 'AGUARDANDO';
+  if (atend === 'EM_ATENDIMENTO' && p.atendente_nome) {
+    return `<div class="card-row" style="color:var(--warning)"><span>🔧 Atendendo</span><span>${p.atendente_nome}</span></div>`;
+  }
+  if (!p.fim) {
+    return `<div class="card-row" style="color:var(--text-muted)"><span>⏳ Atendimento</span><span>Aguardando</span></div>`;
+  }
+  return '';
 }
 
 function cardHTML(p) {
   const emAndamento = !p.fim;
   const justificado = p.status_just === 'JUSTIFICADO';
-  const btnDisabled = (emAndamento || justificado) ? 'disabled' : '';
+  const atend       = p.status_atend || 'AGUARDANDO';
   const nome        = p.nome_maquina || `Máquina ${p.inventory_number}`;
 
   let badgeHTML = '';
   if (justificado) {
     badgeHTML = `<span class="badge badge-success"><span class="pip"></span> Justificado</span>`;
+  } else if (emAndamento && atend === 'EM_ATENDIMENTO') {
+    badgeHTML = `<span class="badge badge-warning"><span class="pip"></span> Em atendimento</span>`;
   } else if (emAndamento) {
-    badgeHTML = `<span class="badge badge-warning"><span class="pip"></span> Em andamento</span>`;
+    badgeHTML = `<span class="badge badge-danger"><span class="pip"></span> Aguardando</span>`;
   } else {
     badgeHTML = `<span class="badge badge-danger"><span class="pip"></span> Pendente</span>`;
   }
@@ -252,9 +275,15 @@ function cardHTML(p) {
         ${descLabel ? `<div class="card-just-desc">${descLabel}</div>` : ''}
       </div>
       <button class="btn-detalhes" data-id="${p.id}">Ver detalhes</button>`;
+  } else if (emAndamento && atend === 'AGUARDANDO') {
+    footerHTML = `
+      <button class="btn-assumir-card" data-id="${p.id}" style="width:100%;padding:7px;background:rgba(255,77,94,.15);border:1px solid rgba(255,77,94,.4);border-radius:8px;color:var(--danger);font-weight:600;font-size:.8rem;cursor:pointer">
+        🔔 Assumir Atendimento
+      </button>`;
+  } else if (emAndamento) {
+    footerHTML = `<button class="btn-justificar" data-id="${p.id}" disabled>⏳ Em atendimento</button>`;
   } else {
-    const label = emAndamento ? '⏳ Em andamento' : 'Justificar';
-    footerHTML = `<button class="btn-justificar" data-id="${p.id}" ${btnDisabled}>${label}</button>`;
+    footerHTML = `<button class="btn-justificar" data-id="${p.id}">Justificar</button>`;
   }
 
   return `
@@ -269,6 +298,7 @@ function cardHTML(p) {
     ${duracaoHTML}
     <div class="card-row"><span>Início</span><span>${fmtDt(p.inicio)}</span></div>
     <div class="card-row"><span>Fim</span><span>${fmtDt(p.fim)}</span></div>
+    ${cardAtendimentoHTML(p)}
     ${footerHTML}
   </div>`;
 }
@@ -276,28 +306,41 @@ function cardHTML(p) {
 // ── DRAWER JUSTIFICATIVA ───────────────────────────────────────────────────
 
 const CATEGORIAS_JUST = [
-  { id: 'ferramenta',  label: 'Troca de ferramenta' },
-  { id: 'corretiva',   label: 'Manutenção corretiva' },
-  { id: 'preventiva',  label: 'Manutenção preventiva' },
-  { id: 'setup',       label: 'Setup / Ajuste' },
-  { id: 'material',    label: 'Falta de material' },
-  { id: 'operador',    label: 'Falta de operador' },
-  { id: 'qualidade',   label: 'Qualidade' },
-  { id: 'treinamento', label: 'Reunião / Treinamento' },
-  { id: 'outro',       label: 'Outro' },
+  'Acoplamento',
+  'Ângulo de Acoplamento',
+  'Apertadeira Torque/Ângulo',
+  'Balanceamento',
+  'Bidi Process',
+  'Dimensional',
+  'Dispositivo',
+  'Estanqueidade',
+  'Falha elétrica',
+  'Falha Mecânica',
+  'Ferramental',
+  'Gravação',
+  'Leitor DMC',
+  'Máquina',
+  'OUTRO',
+  'Outros',
+  'PokaYoke',
+  'Prensa',
+  'Programa',
+  'Robô',
+  'SETUP',
+  'Sistema de Visão',
 ];
 
-function _renderCatGrid(selected) {
-  $('cat-grid').innerHTML = CATEGORIAS_JUST.map(c => `
-    <div class="cat-chip${selected === c.id ? ' active' : ''}" data-cat="${c.id}">${c.label}</div>
-  `).join('');
-}
+(function() {
+  const sel = $('cat-select');
+  CATEGORIAS_JUST.forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat;
+    sel.appendChild(opt);
+  });
+})();
 
-$('cat-grid').addEventListener('click', e => {
-  const chip = e.target.closest('.cat-chip');
-  if (!chip) return;
-  $('just-categoria').value = chip.dataset.cat;
-  $('cat-grid').querySelectorAll('.cat-chip').forEach(c => c.classList.toggle('active', c === chip));
+$('cat-select').addEventListener('change', () => {
   $('just-cat-erro').classList.add('hidden');
 });
 
@@ -311,7 +354,7 @@ async function abrirModal(paradaId) {
   const nome = p.nome_maquina || `Máquina ${p.inventory_number}`;
 
   $('just-parada-id').value = p.id;
-  $('just-categoria').value = '';
+  $('cat-select').value = '';
   $('just-responsavel').value = '';
   $('just-descricao').value = '';
   $('just-char-count').textContent = '0';
@@ -349,7 +392,7 @@ async function abrirModal(paradaId) {
     </div>
   `;
 
-  _renderCatGrid('');
+  $('cat-select').value = '';
   $('modal').classList.remove('hidden');
 }
 
@@ -362,13 +405,13 @@ $('modal').addEventListener('click', e => { if (e.target === $('modal')) fecharM
 $('form-just').addEventListener('submit', async e => {
   e.preventDefault();
   $('just-erro').classList.add('hidden');
-  if (!$('just-categoria').value) {
+  if (!$('cat-select').value) {
     $('just-cat-erro').classList.remove('hidden');
     return;
   }
   const body = {
     parada_id:   Number($('just-parada-id').value),
-    categoria:   $('just-categoria').value,
+    categoria:   $('cat-select').value,
     responsavel: $('just-responsavel').value.trim(),
     descricao:   $('just-descricao').value.trim(),
   };
@@ -733,6 +776,7 @@ async function carregarThresholds() {
     const val = parseInt(d.urgente_minutos) || 30;
     $('cfg-urgente-range').value = val;
     $('cfg-urgente-val').textContent = val;
+    injetarCfgEscalonamento(d);
   } catch (_) {}
 }
 
@@ -746,7 +790,10 @@ $('form-thresholds').addEventListener('submit', async e => {
   try {
     const r = await api('/configuracoes', {
       method: 'PUT',
-      body: JSON.stringify({ urgente_minutos: $('cfg-urgente-range').value }),
+      body: JSON.stringify({
+        urgente_minutos: $('cfg-urgente-range').value,
+        ...coletarCfgEscalonamento(),
+      }),
     });
     if (!r.ok) throw new Error();
     $('cfg-thresh-ok').classList.remove('hidden');
@@ -1077,11 +1124,38 @@ function renderFloorMap(setor) {
 }
 
 function aplicarStatusMaquina(el, st) {
-  el.classList.remove('fm-operando', 'fm-parada', 'fm-urgente');
+  el.classList.remove('fm-operando', 'fm-parada', 'fm-urgente', 'fm-atendimento');
+
+  // Remove botão assumir e label atendimento anteriores
+  el.querySelector('.fm-assumir-btn')?.remove();
+  el.querySelector('.fm-atend-label')?.remove();
+
   if (!st || st.status !== 'parada') {
     el.classList.add('fm-operando');
+    return;
+  }
+
+  const atend = st.status_atend || 'AGUARDANDO';
+
+  if (atend === 'EM_ATENDIMENTO') {
+    el.classList.add('fm-atendimento');
+    const lbl = document.createElement('span');
+    lbl.className = 'fm-atend-label';
+    lbl.textContent = `🔧 ${st.atendente_nome || 'Em atendimento'}`;
+    el.appendChild(lbl);
   } else if (st.just === 'NAO_JUSTIFICADO') {
     el.classList.add('fm-urgente');
+    if (st.parada_id) {
+      const btn = document.createElement('button');
+      btn.className = 'fm-assumir-btn';
+      btn.textContent = 'Assumir';
+      btn.dataset.paradaId = st.parada_id;
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        assumirAtendimento(st.parada_id);
+      });
+      el.appendChild(btn);
+    }
   } else {
     el.classList.add('fm-parada');
   }
@@ -1137,13 +1211,23 @@ function atualizarFila(maquinas) {
 
   list.innerHTML = ativas.map(([inv, st]) => {
     const nome    = nomeInvMapa(inv);
+    const atend   = st.status_atend || 'AGUARDANDO';
     const urgente = st.just === 'NAO_JUSTIFICADO';
-    return `<div class="dfp-item${urgente ? ' dfp-item-urgente' : ''}" onclick="(function(){$('filtro-maquina').value='${inv}';mostrarAba('paradas')})()">
+    const assumirBtn = (atend === 'AGUARDANDO' && st.parada_id)
+      ? `<button class="fm-assumir-btn" style="margin-top:6px;font-size:.65rem"
+           onclick="event.stopPropagation();assumirAtendimento(${st.parada_id})">🔔 Assumir</button>`
+      : '';
+    const statusLabel = atend === 'EM_ATENDIMENTO'
+      ? `🔧 ${st.atendente_nome || 'Em atendimento'}`
+      : (urgente ? 'Aguardando atendimento' : 'Em andamento');
+    return `<div class="dfp-item${urgente && atend === 'AGUARDANDO' ? ' dfp-item-urgente' : ''}"
+         onclick="(function(){$('filtro-maquina').value='${inv}';mostrarAba('paradas')})()">
       <div class="dfp-item-header">
         <span class="dfp-item-nome">${nome}</span>
         <span class="dfp-item-dur">${fmtDuracao(st.duracao_min)}</span>
       </div>
-      <div class="dfp-item-status">${urgente ? 'Não justificado' : 'Em andamento'}</div>
+      <div class="dfp-item-status">${statusLabel}</div>
+      ${assumirBtn}
     </div>`;
   }).join('');
 }
@@ -1166,6 +1250,199 @@ function iniciarPollingMapa() {
 
 function pararPollingMapa() {
   if (MAPA_TIMER) { clearInterval(MAPA_TIMER); MAPA_TIMER = null; }
+}
+
+// ── ASSUMIR ATENDIMENTO ────────────────────────────────────────────────────
+
+async function assumirAtendimento(paradaId) {
+  try {
+    const r = await api(`/paradas/${paradaId}/atender`, { method: 'POST' });
+    const data = await r.json();
+    if (!r.ok) {
+      alert(data.detail || 'Erro ao assumir atendimento');
+      return;
+    }
+    // Atualiza UI imediatamente
+    if (SETOR_ATIVO) pollarMapa();
+    if (!$('aba-paradas').classList.contains('hidden')) carregarParadas();
+    if (!$('aba-equipe').classList.contains('hidden'))  carregarEquipe();
+  } catch (err) {
+    console.error('Erro ao assumir atendimento:', err);
+  }
+}
+
+// ── MINHA EQUIPE ───────────────────────────────────────────────────────────
+
+let EQUIPE_TIMER = null;
+
+async function carregarEquipe() {
+  try {
+    const r = await api('/equipe/status');
+    if (!r.ok) return;
+    const membros = await r.json();
+    renderEquipe(membros);
+    iniciarPollingEquipe();
+  } catch (err) {
+    console.error('Erro ao carregar equipe:', err);
+  }
+}
+
+function renderEquipe(membros) {
+  const grid = $('equipe-grid');
+
+  if (!membros.length) {
+    grid.innerHTML = '<div class="equipe-vazio">Nenhum colega encontrado na sua equipe.</div>';
+    $('equipe-count').classList.add('hidden');
+    $('equipe-topbar-badge').classList.add('hidden');
+    return;
+  }
+
+  const emAtend = membros.filter(m => m.status === 'em_atendimento').length;
+  if (emAtend > 0) {
+    $('equipe-count').textContent = emAtend;
+    $('equipe-count').classList.remove('hidden');
+    $('equipe-topbar-badge').textContent = `${emAtend} em atendimento`;
+    $('equipe-topbar-badge').classList.remove('hidden');
+  } else {
+    $('equipe-count').classList.add('hidden');
+    $('equipe-topbar-badge').classList.add('hidden');
+  }
+
+  const perfilLabel = { tecnico_mep: 'MEP', tecnico_manutencao: 'Manutenção', supervisor: 'Supervisor' };
+
+  grid.innerHTML = membros.map(m => {
+    const av  = iniciais(m.nome);
+    const pfl = perfilLabel[m.perfil] || m.perfil;
+    const livre = m.status === 'livre';
+
+    const statusHTML = livre
+      ? `<div class="equipe-status livre"><span class="equipe-status-dot"></span> Livre</div>`
+      : `<div class="equipe-status em-atendimento"><span class="equipe-status-dot"></span> Em Atendimento</div>`;
+
+    const maqHTML = !livre && m.maquina
+      ? `<div class="equipe-maquina-info">📍 ${m.maquina} · ${fmtDuracao(m.atendimento_min)}</div>`
+      : '';
+
+    const suporteBtn = livre
+      ? `<button class="btn-suporte" data-uid="${m.id}" data-nome="${m.nome}">🆘 Pedir Suporte</button>`
+      : '';
+
+    return `<div class="equipe-card">
+      <div class="equipe-card-head">
+        <div class="equipe-avatar">${av}</div>
+        <div>
+          <div class="equipe-nome">${m.nome}</div>
+          <div class="equipe-perfil-label">${pfl}</div>
+        </div>
+      </div>
+      ${statusHTML}
+      ${maqHTML}
+      ${suporteBtn}
+    </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.btn-suporte').forEach(btn => {
+    btn.addEventListener('click', () => {
+      abrirModalSuporte(Number(btn.dataset.uid), btn.dataset.nome);
+    });
+  });
+}
+
+function iniciarPollingEquipe() {
+  pararPollingEquipe();
+  EQUIPE_TIMER = setInterval(async () => {
+    if ($('aba-equipe').classList.contains('hidden')) return;
+    const r = await api('/equipe/status');
+    if (r.ok) renderEquipe(await r.json());
+  }, 30000);
+}
+
+function pararPollingEquipe() {
+  if (EQUIPE_TIMER) { clearInterval(EQUIPE_TIMER); EQUIPE_TIMER = null; }
+}
+
+// ── MODAL SUPORTE ──────────────────────────────────────────────────────────
+
+function abrirModalSuporte(usuarioDestinoId, nomeDestino) {
+  $('suporte-destino-nome').textContent = nomeDestino;
+  $('suporte-usuario-id').value = usuarioDestinoId;
+
+  // Tenta encontrar parada ativa do usuário logado
+  const minhaParada = _minhaParodaAtiva();
+  $('suporte-parada-id').value = minhaParada?.id || '';
+  $('suporte-maquina-info').textContent = minhaParada?.maquina
+    ? `Máquina: ${minhaParada.maquina}`
+    : '';
+
+  $('modal-suporte').classList.remove('hidden');
+}
+
+function _minhaParodaAtiva() {
+  // Lê da lista de equipe atual (se disponível)
+  const cards = document.querySelectorAll('.equipe-maquina-info');
+  return null; // simplificado: parada_id virá do backend se necessário
+}
+
+$('modal-suporte-fechar').addEventListener('click', () => $('modal-suporte').classList.add('hidden'));
+$('btn-suporte-cancelar').addEventListener('click', () => $('modal-suporte').classList.add('hidden'));
+$('modal-suporte').addEventListener('click', e => { if (e.target === $('modal-suporte')) $('modal-suporte').classList.add('hidden'); });
+
+$('btn-suporte-confirmar').addEventListener('click', async () => {
+  const destId   = Number($('suporte-usuario-id').value);
+  const paradaId = $('suporte-parada-id').value ? Number($('suporte-parada-id').value) : null;
+
+  try {
+    const body = { usuario_destino_id: destId };
+    if (paradaId) body.parada_id = paradaId;
+    const r = await api('/equipe/suporte', { method: 'POST', body: JSON.stringify(body) });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Erro ao enviar');
+    $('modal-suporte').classList.add('hidden');
+    // Feedback visual simples
+    const btn = $('btn-suporte-confirmar');
+    const orig = btn.textContent;
+    btn.textContent = '✅ Enviado!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+// ── CONFIGURAÇÕES DE ESCALONAMENTO ─────────────────────────────────────────
+
+// Injeta campos de escalonamento na tela de configurações do supervisor
+function injetarCfgEscalonamento(cfg) {
+  const container = $('cfg-escalamento-container');
+  if (!container) return;
+  container.innerHTML = `
+    <div class="cfg-escalamento-grid">
+      <div class="field">
+        <label class="field-label">Notif. supervisores após (min)</label>
+        <input type="number" id="cfg-escala-sup" class="input" min="1" max="240"
+          value="${cfg.escala_supervisor_min || 15}" />
+      </div>
+      <div class="field">
+        <label class="field-label">Notif. gerência após (min)</label>
+        <input type="number" id="cfg-escala-ger" class="input" min="1" max="480"
+          value="${cfg.escala_gerente_min || 30}" />
+      </div>
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label class="field-label">Nomes dos gerentes (Teams)</label>
+      <input type="text" id="cfg-gerentes-nomes" class="input"
+        placeholder="Ex: Carlos Gerente, Ana Diretora"
+        value="${cfg.gerentes_nomes || ''}" />
+      <div style="font-size:.75rem;color:var(--text-muted);margin-top:4px">Mencionados na mensagem de escalonamento à gerência</div>
+    </div>
+  `;
+}
+
+function coletarCfgEscalonamento() {
+  return {
+    escala_supervisor_min: $('cfg-escala-sup')?.value || '15',
+    escala_gerente_min:    $('cfg-escala-ger')?.value || '30',
+    gerentes_nomes:        $('cfg-gerentes-nomes')?.value || '',
+  };
 }
 
 // ── INIT ───────────────────────────────────────────────────────────────────

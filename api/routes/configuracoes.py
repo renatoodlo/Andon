@@ -7,7 +7,12 @@ from database.models import get_conn
 
 router = APIRouter(tags=["configuracoes"])
 
-DEFAULTS_CONFIG = {"urgente_minutos": "30"}
+DEFAULTS_CONFIG = {
+    "urgente_minutos":       "30",
+    "escala_supervisor_min": "15",
+    "escala_gerente_min":    "30",
+    "gerentes_nomes":        "",
+}
 
 
 # ── Perfil do usuário logado ──────────────────────────────────────────────────

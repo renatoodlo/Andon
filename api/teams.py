@@ -88,6 +88,47 @@ def notificar_justificativa(
     _enviar_webhook(msg, cor="00AA00")
 
 
+def notificar_atendimento(inventory_number: str, nome_tecnico: str, nome_maquina: str) -> None:
+    msg = (
+        f"🟡 EM ATENDIMENTO | {nome_maquina} ({inventory_number}) | "
+        f"{nome_tecnico} assumiu o chamado | {datetime.now().strftime('%d/%m %H:%M')}"
+    )
+    _enviar_webhook(msg, cor="F5A524")
+
+
+def notificar_escalamento_supervisor(inventory_number: str, duracao_min: int, nome_maquina: str) -> None:
+    msg = (
+        f"⚠️ ESCALONAMENTO SUPERVISORES | {nome_maquina} ({inventory_number}) | "
+        f"Parada há {duracao_min} min sem nenhum técnico atender"
+    )
+    _enviar_webhook(msg, cor="FF8C00")
+
+
+def notificar_escalamento_gerente(
+    inventory_number: str, duracao_min: int, nome_maquina: str, gerentes_nomes: str
+) -> None:
+    gerentes = f" | Gerentes: {gerentes_nomes}" if gerentes_nomes else ""
+    msg = (
+        f"🚨 ESCALONAMENTO GERÊNCIA | {nome_maquina} ({inventory_number}) | "
+        f"Parada há {duracao_min} min sem atendimento{gerentes}"
+    )
+    _enviar_webhook(msg, cor="FF0000")
+
+
+SENNA_LINK = "https://open-webui.azurewebsites.net/"
+
+
+def notificar_suporte(
+    nome_solicitante: str, nome_destino: str, nome_maquina: str, linha: str
+) -> None:
+    msg = (
+        f"🆘 PEDIDO DE SUPORTE | {nome_destino}, {nome_solicitante} está solicitando "
+        f"seu suporte em {nome_maquina} ({linha}) | "
+        f"🔗 SENNA: {SENNA_LINK}"
+    )
+    _enviar_webhook(msg, cor="42E4D9")
+
+
 def atualizar_mensagem_justificada(
     msg_id: str,
     inventory_number: str,

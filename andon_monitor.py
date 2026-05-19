@@ -4,7 +4,11 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 from database.models import init_db, get_conn
-from api.teams import notificar_parada, notificar_retorno
+from api.teams import (
+    notificar_parada, notificar_retorno,
+    notificar_escalamento_supervisor, notificar_escalamento_gerente,
+)
+from maquinas_config import nome_maquina
 
 load_dotenv()
 init_db()
@@ -75,6 +79,56 @@ def _fechar_parada(inventory_number, fim, duracao_min, teams_msg_id):
         print(f"  ⚠️  Erro ao fechar parada no banco: {e}")
 
 
+def _get_config(chave, default=""):
+    try:
+        with get_conn() as conn:
+            row = conn.execute(
+                "SELECT valor FROM configuracoes WHERE chave = ?", (chave,)
+            ).fetchone()
+            return row["valor"] if row else default
+    except Exception:
+        return default
+
+
+def _verificar_escalamentos():
+    try:
+        sup_min = int(_get_config("escala_supervisor_min", "15"))
+        ger_min = int(_get_config("escala_gerente_min", "30"))
+        gerentes_nomes = _get_config("gerentes_nomes", "")
+
+        with get_conn() as conn:
+            paradas = conn.execute(
+                """SELECT id, inventory_number, inicio,
+                          CAST((julianday('now','localtime') - julianday(inicio)) * 1440 AS INTEGER) AS duracao_min,
+                          escala_sup_enviado, escala_ger_enviado
+                   FROM paradas
+                   WHERE fim IS NULL AND status_atend = 'AGUARDANDO'"""
+            ).fetchall()
+
+            for p in paradas:
+                duracao = int(p["duracao_min"] or 0)
+                nome_maq = nome_maquina(p["inventory_number"])
+
+                if duracao >= sup_min and not p["escala_sup_enviado"]:
+                    notificar_escalamento_supervisor(p["inventory_number"], duracao, nome_maq)
+                    conn.execute(
+                        "UPDATE paradas SET escala_sup_enviado=1 WHERE id=?", (p["id"],)
+                    )
+                    conn.commit()
+                    print(f"  ⚠️  Escalonamento supervisor enviado — {p['inventory_number']} ({duracao} min)")
+
+                if duracao >= ger_min and not p["escala_ger_enviado"]:
+                    notificar_escalamento_gerente(p["inventory_number"], duracao, nome_maq, gerentes_nomes)
+                    conn.execute(
+                        "UPDATE paradas SET escala_ger_enviado=1 WHERE id=?", (p["id"],)
+                    )
+                    conn.commit()
+                    print(f"  🚨 Escalonamento gerência enviado — {p['inventory_number']} ({duracao} min)")
+
+    except Exception as e:
+        print(f"  ⚠️  Erro no verificar_escalamentos: {e}")
+
+
 def processar_mudancas(estados_atuais):
     global estado_maquinas
 
@@ -139,6 +193,7 @@ def main():
         try:
             estados = buscar_estados_atuais(conn)
             processar_mudancas(estados)
+            _verificar_escalamentos()
         except pyodbc.Error as e:
             print(f"⚠️  Erro SQL, tentando reconectar... ({e})")
             try:

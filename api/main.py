@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from database.models import init_db, get_conn
 from api.auth import verificar_senha, criar_token
-from api.routes import paradas, maquinas, usuarios, justificativas, configuracoes, mapa
+from api.routes import paradas, maquinas, usuarios, justificativas, configuracoes, mapa, equipe
 
 load_dotenv()
 init_db()
@@ -29,6 +29,7 @@ app.include_router(usuarios.router)
 app.include_router(justificativas.router)
 app.include_router(configuracoes.router)
 app.include_router(mapa.router)
+app.include_router(equipe.router)
 
 app.mount("/static", StaticFiles(directory="web/static"), name="static")
 

@@ -13,6 +13,7 @@ class UsuarioCreate(BaseModel):
     login: str
     senha: str
     perfil: str
+    email: Optional[str] = None
 
 
 class UsuarioUpdate(BaseModel):
@@ -20,13 +21,14 @@ class UsuarioUpdate(BaseModel):
     senha: Optional[str] = None
     perfil: Optional[str] = None
     ativo: Optional[int] = None
+    email: Optional[str] = None
 
 
 @router.get("")
 def listar_usuarios(usuario=Depends(require_perfil("supervisor"))):
     with get_conn() as conn:
         rows = conn.execute(
-            "SELECT id, nome, login, perfil, ativo FROM usuarios ORDER BY nome"
+            "SELECT id, nome, login, perfil, ativo, email FROM usuarios ORDER BY nome"
         ).fetchall()
     return [dict(r) for r in rows]
 
@@ -39,8 +41,8 @@ def criar_usuario(body: UsuarioCreate, usuario=Depends(require_perfil("superviso
     try:
         with get_conn() as conn:
             conn.execute(
-                "INSERT INTO usuarios (nome, login, senha_hash, perfil) VALUES (?, ?, ?, ?)",
-                (body.nome, body.login, senha_hash, body.perfil)
+                "INSERT INTO usuarios (nome, login, senha_hash, perfil, email) VALUES (?, ?, ?, ?, ?)",
+                (body.nome, body.login, senha_hash, body.perfil, body.email)
             )
             conn.commit()
     except Exception:
@@ -63,6 +65,8 @@ def atualizar_usuario(
             conn.execute("UPDATE usuarios SET perfil = ? WHERE id = ?", (body.perfil, usuario_id))
         if body.ativo is not None:
             conn.execute("UPDATE usuarios SET ativo = ? WHERE id = ?", (body.ativo, usuario_id))
+        if body.email is not None:
+            conn.execute("UPDATE usuarios SET email = ? WHERE id = ?", (body.email, usuario_id))
         conn.commit()
     return {"ok": True}
 

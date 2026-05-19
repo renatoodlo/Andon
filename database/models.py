@@ -94,7 +94,7 @@ def init_db():
         """)
         print("✅ Migração concluída")
     else:
-        # Banco novo ou já migrado — apenas converte se ainda restar algum
+    # Banco novo ou já migrado — apenas converte se ainda restar algum
         conn.execute("UPDATE usuarios SET perfil='tecnico_mep' WHERE perfil IN ('tecnico','operador')")
         conn.commit()
 
@@ -121,8 +121,34 @@ def init_db():
         conn.commit()
         print(f"✅ {len(MAQUINAS)} máquinas importadas de maquinas_config.py")
 
+    # Migrações de colunas novas em paradas
+    paradas_cols = {r[1] for r in conn.execute("PRAGMA table_info(paradas)")}
+    paradas_migrations = [
+        "ALTER TABLE paradas ADD COLUMN status_atend       TEXT    DEFAULT 'AGUARDANDO'",
+        "ALTER TABLE paradas ADD COLUMN atendente_id       INTEGER",
+        "ALTER TABLE paradas ADD COLUMN atendimento_inicio TEXT",
+        "ALTER TABLE paradas ADD COLUMN escala_sup_enviado INTEGER DEFAULT 0",
+        "ALTER TABLE paradas ADD COLUMN escala_ger_enviado INTEGER DEFAULT 0",
+    ]
+    for stmt in paradas_migrations:
+        col = stmt.split("ADD COLUMN")[1].split()[0]
+        if col not in paradas_cols:
+            conn.execute(stmt)
+    conn.commit()
+
+    # Migração de coluna email em usuarios
+    usuarios_cols = {r[1] for r in conn.execute("PRAGMA table_info(usuarios)")}
+    if "email" not in usuarios_cols:
+        conn.execute("ALTER TABLE usuarios ADD COLUMN email TEXT")
+    conn.commit()
+
     # Valores padrão de configuração
-    defaults = [("urgente_minutos", "30")]
+    defaults = [
+        ("urgente_minutos",       "30"),
+        ("escala_supervisor_min", "15"),
+        ("escala_gerente_min",    "30"),
+        ("gerentes_nomes",        ""),
+    ]
     conn.executemany(
         "INSERT OR IGNORE INTO configuracoes (chave, valor) VALUES (?, ?)", defaults
     )
