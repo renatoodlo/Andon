@@ -925,15 +925,20 @@ const PLANTA = {
         id: 'CM13',
         cols: 3,
         machines: [
-          { inv: '7476', label: 'OP10AB',     col: 1, row: 1 },
-          { inv: '7376', label: 'OP10CD',     col: 2, row: 1 },
-          { inv: '7576', label: 'OP20',       col: 3, row: 1 },
-          { inv: '7676', label: 'OP30',       col: 1, row: 2, colSpan: 3 },
-          { inv: '7276', label: 'OP40A',      col: 1, row: 3 },
-          { inv: '7776', label: 'OP40B',      col: 2, row: 3 },
-          { inv: null,   label: 'BL',         col: 3, row: 3, disabled: true },
-          { inv: '7876', label: 'OP50',       col: 1, row: 4 },
-          { inv: '7978', label: 'OP70',       col: 2, row: 4 },
+          // col 1: BL, BLV, gap, 10B, 10A
+          { inv: null,   label: 'BL',    col: 1, row: 1, disabled: true },
+          { inv: null,   label: 'BLV',   col: 1, row: 2, disabled: true },
+          { inv: '7376', label: 'OP10B', col: 1, row: 4 },
+          { inv: '7476', label: 'OP10A', col: 1, row: 5 },
+          // col 2: OP20 tall (rows 2-4)
+          { inv: '7576', label: 'OP20',  col: 2, row: 2, rowSpan: 3 },
+          // col 3: OP30, 40A, 40B, 50, 60, OP70 wide
+          { inv: '7676', label: 'OP30',  col: 3, row: 1 },
+          { inv: '7276', label: 'OP40A', col: 3, row: 3 },
+          { inv: '7776', label: 'OP40B', col: 3, row: 4 },
+          { inv: '7876', label: 'OP50',  col: 3, row: 5 },
+          { inv: null,   label: 'OP60',  col: 3, row: 6, disabled: true },
+          { inv: '7978', label: 'OP70',  col: 2, row: 7, colSpan: 2 },
         ]
       },
       {
@@ -1099,7 +1104,7 @@ function renderFloorMap(setor) {
       const block = document.createElement('div');
       block.className = 'fm-machine' + (m.disabled ? ' fm-machine-disabled' : '');
       block.style.gridColumn = m.colSpan ? `${m.col} / span ${m.colSpan}` : String(m.col);
-      block.style.gridRow    = String(m.row);
+      block.style.gridRow    = m.rowSpan ? `${m.row} / span ${m.rowSpan}` : String(m.row);
 
       if (m.inv) {
         block.dataset.inv = m.inv;
